@@ -34,7 +34,7 @@ REFRESH_TOKEN = "你的refresh_token"
 
 获取方式：
 1. 打开 https://quantapi.10jqka.com.cn/gwstatic/static/ds_web/super-command-web/index.html#/AccountDetails
-2. 用公司账号登录 (xmxy399 / 415b47)
+2. 用公司账号登录 (xmxy399 /密码)
 3. 复制页面上的 refresh_token
 
 ### 3. 运行因子监控
