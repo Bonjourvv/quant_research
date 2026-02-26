@@ -111,56 +111,62 @@ class RollYieldFactor:
         roll_yield = (math.log(far_price) - math.log(near_price)) * 365 / day_diff
         
         return roll_yield
-    
+
     def get_active_contracts(self, product: str = 'ni') -> list:
         """
         获取当前活跃的合约列表
-        
+
         Args:
             product: 品种代码，'ni'=沪镍, 'ss'=不锈钢
-            
+
         Returns:
             合约代码列表，按到期日排序
         """
-        # 生成未来12个月的合约代码
+        # SHFE镍和不锈钢只有奇数月合约
+        valid_months = [1, 3, 5, 7, 9, 11]
+
         today = date.today()
         contracts = []
-        
-        for i in range(12):
-            # 计算月份
+
+        # 生成未来24个月的合约
+        for i in range(24):
             year = today.year
             month = today.month + i
-            
-            if month > 12:
+
+            while month > 12:
                 month -= 12
                 year += 1
-                
-            # 格式化合约代码
-            code = f"{product}{str(year)[-2:]}{month:02d}.SHF"
-            
+
+            # 只保留奇数月
+            if month not in valid_months:
+                continue
+
+            # 格式化合约代码（大写）
+            code = f"{product.upper()}{str(year)[-2:]}{month:02d}.SHF"
+
             # 只保留还未到期的合约
             if self.days_to_expiry(code, today) > 0:
                 contracts.append(code)
-                
-        return contracts[:6]  # 返回最近6个合约
-    
+
+        return contracts[:6]
+
     def get_near_far_contracts(self, product: str = 'ni') -> Tuple[str, str]:
         """
         获取近月和远月合约代码
-        
+
         Args:
             product: 品种代码
-            
+
         Returns:
             (近月合约, 远月合约)
         """
         contracts = self.get_active_contracts(product)
-        
+
         if len(contracts) < 2:
             raise ValueError(f"活跃合约数量不足: {contracts}")
-            
+
         return contracts[0], contracts[1]
-    
+
     def fetch_contract_price(self, contract_code: str) -> Optional[float]:
         """
         获取合约的最新价格
