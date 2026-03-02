@@ -3,6 +3,26 @@
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/include" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/beautifulsoup4-4.14.3.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/bs4" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/bs4-0.0.2.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/lxml" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/lxml-6.0.2.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/pip-24.3.1.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/pip/_vendor/resolvelib/compat" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/setuptools-44.1.1.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/simplejson" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/simplejson-3.20.2.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/soupsieve" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/soupsieve-2.8.3.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/tqdm" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/tqdm-4.67.3.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/tushare" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/tushare-1.4.24.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/typing_extensions-4.15.0.dist-info" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/websocket" />
+      <excludeFolder url="file://$MODULE_DIR$/.venv/lib/python3.11/site-packages/websocket_client-1.9.0.dist-info" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.9 (nickel_research)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
