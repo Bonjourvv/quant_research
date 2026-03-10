@@ -1,13 +1,20 @@
 """
-Tushare API 客户端
+Tushare API 客户端（扩展版）
 
 文档：https://tushare.pro/document/2
+
+扩展功能：
+- 获取品种所有合约列表
+- 批量获取多合约日线数据
+- 获取指定日期的所有活跃合约行情
 """
 
 import tushare as ts
 import tushare.pro.client as client
 import pandas as pd
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime, timedelta
+import time
 
 # 设置API地址
 client.DataApi._DataApi__http_url = "http://tushare.xyz"
@@ -22,6 +29,10 @@ class TushareClient:
     def __init__(self, token: str = None):
         self.token = token or TUSHARE_TOKEN
         self.pro = ts.pro_api(self.token)
+        
+        # 缓存
+        self._contract_cache = {}
+        self._daily_cache = {}
 
     def get_futures_daily(
             self,
@@ -67,22 +78,220 @@ class TushareClient:
         )
         return df
 
+    def get_futures_basic(self, exchange: str = 'SHFE') -> pd.DataFrame:
+        """
+        获取期货合约基础信息
+        
+        Args:
+            exchange: 交易所代码，SHFE=上期所
+            
+        Returns:
+            DataFrame with columns: ts_code, symbol, name, list_date, delist_date, etc.
+        """
+        df = self.pro.fut_basic(
+            exchange=exchange,
+            fields="ts_code,symbol,name,fut_code,list_date,delist_date,multiplier"
+        )
+        return df
+
+    def get_ni_contracts(self) -> pd.DataFrame:
+        """
+        获取沪镍所有合约列表
+        
+        Returns:
+            DataFrame with columns: ts_code, list_date, delist_date
+        """
+        cache_key = 'ni_contracts'
+        if cache_key in self._contract_cache:
+            return self._contract_cache[cache_key]
+        
+        df = self.get_futures_basic('SHFE')
+        
+        # 筛选沪镍合约（NI开头，排除主力连续合约）
+        ni_df = df[
+            (df['fut_code'] == 'NI') & 
+            (~df['ts_code'].str.contains('L'))  # 排除NI.SHF, NIL.SHF等
+        ].copy()
+        
+        ni_df = ni_df.sort_values('delist_date')
+        
+        self._contract_cache[cache_key] = ni_df
+        return ni_df
+
+    def get_active_contracts_on_date(
+            self, 
+            trade_date: str, 
+            product: str = 'NI'
+    ) -> List[str]:
+        """
+        获取指定日期的活跃合约列表
+        
+        Args:
+            trade_date: 交易日期，格式 'YYYYMMDD'
+            product: 品种代码
+            
+        Returns:
+            合约代码列表，按到期日排序
+        """
+        trade_date = trade_date.replace('-', '')
+        
+        if product == 'NI':
+            contracts_df = self.get_ni_contracts()
+        else:
+            raise ValueError(f"暂不支持品种: {product}")
+        
+        # 筛选在指定日期活跃的合约（已上市且未退市）
+        active = contracts_df[
+            (contracts_df['list_date'] <= trade_date) &
+            (contracts_df['delist_date'] >= trade_date)
+        ]
+        
+        # 按退市日期排序（即按到期日排序）
+        active = active.sort_values('delist_date')
+        
+        return active['ts_code'].tolist()
+
+    def get_all_contracts_daily(
+            self,
+            product: str,
+            start_date: str,
+            end_date: str,
+            min_oi: int = 100
+    ) -> pd.DataFrame:
+        """
+        获取品种所有合约在指定时间段的日线数据
+        
+        Args:
+            product: 品种代码，如 'NI'
+            start_date: 开始日期
+            end_date: 结束日期
+            min_oi: 最小持仓量过滤
+            
+        Returns:
+            DataFrame with columns: trade_date, ts_code, close, oi, delist_date
+        """
+        start_date = start_date.replace('-', '')
+        end_date = end_date.replace('-', '')
+        
+        if product == 'NI':
+            contracts_df = self.get_ni_contracts()
+        else:
+            raise ValueError(f"暂不支持品种: {product}")
+        
+        # 筛选在时间段内活跃的合约
+        relevant_contracts = contracts_df[
+            (contracts_df['delist_date'] >= start_date) &
+            (contracts_df['list_date'] <= end_date)
+        ]
+        
+        all_data = []
+        total = len(relevant_contracts)
+        
+        for idx, (_, row) in enumerate(relevant_contracts.iterrows()):
+            ts_code = row['ts_code']
+            delist_date = row['delist_date']
+            
+            print(f"  获取 {ts_code} ({idx+1}/{total})...", end='')
+            
+            try:
+                df = self.get_futures_daily(ts_code, start_date, end_date)
+                
+                if df is not None and not df.empty:
+                    df['delist_date'] = delist_date
+                    # 过滤低持仓量数据
+                    df = df[df['oi'] >= min_oi]
+                    all_data.append(df)
+                    print(f" {len(df)}条")
+                else:
+                    print(" 无数据")
+                    
+            except Exception as e:
+                print(f" 错误: {e}")
+            
+            # 避免API限频
+            time.sleep(0.1)
+        
+        if not all_data:
+            return pd.DataFrame()
+        
+        result = pd.concat(all_data, ignore_index=True)
+        result = result.sort_values(['trade_date', 'delist_date'])
+        
+        return result
+
+    def get_dominant_daily(
+            self,
+            product: str,
+            start_date: str,
+            end_date: str
+    ) -> pd.DataFrame:
+        """
+        获取主力合约日线数据（用于回测基准）
+        
+        Args:
+            product: 品种代码
+            start_date: 开始日期
+            end_date: 结束日期
+            
+        Returns:
+            DataFrame with columns: trade_date, dominant_code, close, oi
+        """
+        start_date = start_date.replace('-', '')
+        end_date = end_date.replace('-', '')
+        
+        # 获取主力合约映射
+        mapping = self.get_futures_mapping(
+            f"{product}.SHF",
+            start_date,
+            end_date
+        )
+        
+        if mapping is None or mapping.empty:
+            return pd.DataFrame()
+        
+        # 按日期获取主力合约价格
+        results = []
+        grouped = mapping.groupby('trade_date')
+        
+        for trade_date, group in grouped:
+            dominant_code = group['mapping_ts_code'].iloc[0]
+            
+            # 获取该日主力合约行情
+            daily = self.get_futures_daily(dominant_code, trade_date, trade_date)
+            
+            if daily is not None and not daily.empty:
+                results.append({
+                    'trade_date': trade_date,
+                    'dominant_code': dominant_code,
+                    'close': daily['close'].iloc[0],
+                    'oi': daily['oi'].iloc[0]
+                })
+        
+        return pd.DataFrame(results)
+
 
 def main():
-    """测试Tushare连接"""
-    print("测试Tushare API连接...")
+    """测试扩展功能"""
+    print("测试Tushare API扩展功能...")
+    print("=" * 60)
 
-    client = TushareClient()
+    ts_client = TushareClient()
 
-    # 测试期货日线
-    print("\n沪镍主力合约日线（最近5天）:")
-    df = client.get_futures_daily("NI2603.SHF", "20260220", "20260225")
-    print(df)
+    # 测试获取沪镍合约列表
+    print("\n【沪镍合约列表】")
+    contracts = ts_client.get_ni_contracts()
+    print(f"共 {len(contracts)} 个合约")
+    print(contracts[['ts_code', 'list_date', 'delist_date']].head(10))
 
-    # 测试主力映射
-    print("\n沪镍主力合约映射:")
-    df = client.get_futures_mapping("NI.SHF", "20260101", "20260225")
-    print(df.head())
+    # 测试获取指定日期活跃合约
+    print("\n【2026-02-25 活跃合约】")
+    active = ts_client.get_active_contracts_on_date('20260225', 'NI')
+    print(active)
+
+    # 测试获取主力映射
+    print("\n【沪镍主力合约映射（最近5天）】")
+    mapping = ts_client.get_futures_mapping("NI.SHF", "20260220", "20260225")
+    print(mapping)
 
 
 if __name__ == '__main__':
