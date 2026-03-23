@@ -1,24 +1,60 @@
 """
-同花顺API配置
+项目配置中心。
 
-使用前请填写 REFRESH_TOKEN
-获取方式：
-1. 打开 https://quantapi.10jqka.com.cn/gwstatic/static/ds_web/super-command-web/index.html#/AccountDetails
-2. 用公司账号登录 (xmxy399 / 415b47)
-3. 复制页面上的 refresh_token
+优先从环境变量读取敏感配置；如果项目根目录存在 `.env` 文件，
+会在导入时做一次轻量加载，便于本地研究使用。
 """
 
-# ========== 必填配置 ==========
- # 填入你的refresh_token
-REFRESH_TOKEN = "eyJzaWduX3RpbWUiOiIyMDI2LTAzLTAzIDE0OjMyOjU5In0=.eyJ1aWQiOiI2ODY0MjMzODciLCJ1c2VyIjp7ImFjY2Vzc1Rva2VuIjoiOWNjMGMzZmY4MDgzZWYzZGZkNTkwNWZlZGQ3ZWExOTNmYmJhYWFkMi5zaWduc19OamcyTkRJek16ZzMiLCJhY2Nlc3NUb2tlbkV4cGlyZWRUaW1lIjoiMjAyNi0wMy0wMyAxNDozMjo1OSIsImFjY291bnQiOiJ4bXh5Mzk5IiwiYXV0aFVzZXJJbmZvIjp7IkVleGNlbFBheWVycyI6IjE3NzQ5MjAzMDEwMDAifSwiY29kZUNTSSI6W10sImNvZGVaekF1dGgiOltdLCJoYXNBSVByZWRpY3QiOmZhbHNlLCJoYXNBSVRhbGsiOmZhbHNlLCJoYXNDSUNDIjpmYWxzZSwiaGFzQ1NJIjpmYWxzZSwiaGFzRXZlbnREcml2ZSI6ZmFsc2UsImhhc0ZUU0UiOmZhbHNlLCJoYXNGYXN0IjpmYWxzZSwiaGFzRnVuZFZhbHVhdGlvbiI6ZmFsc2UsImhhc0hLIjp0cnVlLCJoYXNMTUUiOmZhbHNlLCJoYXNMZXZlbDIiOmZhbHNlLCJoYXNSZWFsQ01FIjpmYWxzZSwiaGFzVHJhbnNmZXIiOmZhbHNlLCJoYXNVUyI6ZmFsc2UsImhhc1VTQUluZGV4IjpmYWxzZSwiaGFzVVNERUJUIjpmYWxzZSwibWFya2V0QXV0aCI6eyJEQ0UiOmZhbHNlfSwibWF4T25MaW5lIjoxLCJub0Rpc2siOmZhbHNlLCJwcm9kdWN0VHlwZSI6IlNVUEVSQ09NTUFORFBST0RVQ1QiLCJyZWZyZXNoVG9rZW5FeHBpcmVkVGltZSI6IjIwMjYtMDMtMzEgMDk6MjU6MDEiLCJzZXNzc2lvbiI6Ijc5MjYxODQ3MWViNzZhMDc1MWNmZTUxYzJmM2E4ZjIwIiwic2lkSW5mbyI6ezY0OiIxMTExMTExMTExMTExMTExMTExMTExMTEiLDE6IjEwMSIsMjoiMSIsNjc6IjEwMTExMTExMTExMTExMTExMTExMTExMSIsMzoiMSIsNjk6IjExMTExMTExMTExMTExMTExMTExMTExMTEiLDU6IjEiLDY6IjEiLDcxOiIxMTExMTExMTExMTExMTExMTExMTExMDAiLDc6IjExMTExMTExMTExIiw4OiIwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMSIsMTM4OiIxMTExMTExMTExMTExMTExMTExMTExMTExIiwxMzk6IjExMTExMTExMTExMTExMTExMTExMTExMTEiLDE0MDoiMTExMTExMTExMTExMTExMTExMTExMTExMSIsMTQxOiIxMTExMTExMTExMTExMTExMTExMTExMTExIiwxNDI6IjExMTExMTExMTExMTExMTExMTExMTExMTEiLDE0MzoiMTEiLDgwOiIxMTExMTExMTExMTExMTExMTExMTExMTEiLDgxOiIxMTExMTExMTExMTExMTExMTExMTExMTEiLDgyOiIxMTExMTExMTExMTExMTExMTExMTAxMTAiLDgzOiIxMTExMTExMTExMTExMTExMTEwMDAwMDAiLDg1OiIwMTExMTExMTExMTExMTExMTExMTExMTEiLDg3OiIxMTExMTExMTAwMTExMTEwMTExMTExMTEiLDg5OiIxMTExMTExMTAxMTAxMDAwMDAwMDExMTEiLDkwOiIxMTExMTAxMTExMTExMTExMTAwMDExMTExMCIsOTM6IjExMTExMTExMTExMTExMTExMDAwMDExMTEiLDk0OiIxMTExMTExMTExMTExMTExMTExMTExMTExIiw5NjoiMTExMTExMTExMTExMTExMTExMTExMTExMSIsOTk6IjEwMCIsMTAwOiIxMTExMDExMTExMTExMTExMTEwIiwxMDI6IjEiLDQ0OiIxMSIsMTA5OiIxIiw1MzoiMTExMTExMTExMTExMTExMTExMTExMTExIiw1NDoiMTEwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAiLDU3OiIwMDAwMDAwMDAwMDAwMDAwMDAwMDEwMDAwMDAwMCIsNjI6IjExMTExMTExMTExMTExMTExMTExMTExMSIsNjM6IjExMTExMTExMTExMTExMTExMTExMTExMSJ9LCJ0aW1lc3RhbXAiOiIxNzcyNTE5NTc5MzQ0IiwidHJhbnNBdXRoIjpmYWxzZSwidHRsVmFsdWUiOjAsInVpZCI6IjY4NjQyMzM4NyIsInVzZXJUeXBlIjoiRlJFRUlBTCIsIndpZmluZExpbWl0TWFwIjp7fX19.1BC53740A13919DE228953E650CC09E0F0EE5693948E1B0CDEE0081B8BFAE459"
-# ========== API配置（无需修改）==========
-API_BASE_URL = "https://quantapi.51ifind.com/api/v1"
+from __future__ import annotations
 
-# 合约代码
-CONTRACTS = {
-    'ni_main': 'niZL.SHF',      # 沪镍主力
-    'ss_main': 'ssZL.SHF',      # 不锈钢主力
+import os
+from pathlib import Path
+from typing import Dict
+
+
+def _load_local_env() -> None:
+    """从项目根目录加载简单的 KEY=VALUE 配置。"""
+    project_root = Path(__file__).resolve().parent.parent
+    env_file = project_root / ".env"
+
+    if not env_file.exists():
+        return
+
+    for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip("'").strip('"')
+
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+_load_local_env()
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw"
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+
+REFRESH_TOKEN = os.getenv("THS_REFRESH_TOKEN", "")
+API_BASE_URL = os.getenv("THS_API_BASE_URL", "https://quantapi.51ifind.com/api/v1")
+
+TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "")
+TUSHARE_BASE_URL = os.getenv("TUSHARE_BASE_URL", "http://tushare.xyz")
+
+CONTRACTS: Dict[str, str] = {
+    "ni_main": "niZL.SHF",
+    "ss_main": "ssZL.SHF",
 }
 
-# 数据字段
 QUOTE_FIELDS = "open;high;low;close;volume;amount;openInterest;settlement"
+
+DEFAULT_PRODUCT = "NI"
+DEFAULT_START_DATE = "20150401"
+DEFAULT_MIN_OI = 1000
+DEFAULT_RY_METHOD = "weighted_avg"

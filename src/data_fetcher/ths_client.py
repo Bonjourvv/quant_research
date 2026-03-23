@@ -4,18 +4,19 @@
 API文档：https://quantapi.51ifind.com
 """
 
-import requests
 import json
 import os
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 
-# 尝试从config导入，如果失败则使用默认值
+import requests
+
 try:
-    from config.settings import REFRESH_TOKEN, API_BASE_URL
+    from config.settings import API_BASE_URL, PROJECT_ROOT, REFRESH_TOKEN
 except ImportError:
     REFRESH_TOKEN = ""
     API_BASE_URL = "https://quantapi.51ifind.com/api/v1"
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 
 class THSClient:
@@ -34,10 +35,7 @@ class THSClient:
         self.token_expiry = None
         
         # token缓存文件
-        self.token_cache_file = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-            'config', '.token_cache.json'
-        )
+        self.token_cache_file = os.path.join(PROJECT_ROOT, 'config', '.token_cache.json')
         
         # 尝试加载缓存的token
         self._load_token_cache()
@@ -95,6 +93,38 @@ class THSClient:
         
         self._save_token_cache()
 
+    def _request_with_auto_refresh(self, url: str, payload: Dict, timeout: int = 30) -> Dict:
+        """请求同花顺接口，若 access_token 失效则自动刷新后重试一次。"""
+        self._ensure_access_token()
+
+        headers = {
+            "Content-Type": "application/json",
+            "access_token": self.access_token
+        }
+
+        resp = requests.post(url, json=payload, headers=headers, timeout=timeout)
+        result = resp.json()
+
+        errmsg = str(result.get("errmsg", ""))
+        token_invalid = "Access_Token is expired or ilegal" in errmsg
+
+        if result.get("errorcode") == 0:
+            return result
+
+        if token_invalid:
+            self.access_token = None
+            self.token_expiry = None
+            self._ensure_access_token()
+
+            headers["access_token"] = self.access_token
+            resp = requests.post(url, json=payload, headers=headers, timeout=timeout)
+            result = resp.json()
+
+        if result.get("errorcode") != 0:
+            raise Exception(f"API请求失败: {result.get('errmsg', '未知错误')}")
+
+        return result
+
     def get_realtime_quote(self, codes: str) -> Dict:
         """获取实时行情"""
         codes = codes.upper()
@@ -104,19 +134,8 @@ class THSClient:
             "indicators": "latest,open,high,low,preClose,volume,amount,openInterest"
         }
 
-        self._ensure_access_token()
-
         url = f"{self.base_url}/real_time_quotation"
-        headers = {
-            "Content-Type": "application/json",
-            "access_token": self.access_token
-        }
-
-        resp = requests.post(url, json=params, headers=headers, timeout=30)
-        result = resp.json()
-
-        if result.get('errorcode') != 0:
-            raise Exception(f"API请求失败: {result.get('errmsg', '未知错误')}")
+        result = self._request_with_auto_refresh(url, params, timeout=30)
 
         tables = result.get('tables', [])
         if not tables:
@@ -142,16 +161,9 @@ class THSClient:
             period: str = 'D'
     ) -> List[Dict]:
         """获取历史行情"""
-        self._ensure_access_token()
-
         codes = codes.upper()
 
         url = f"{self.base_url}/history_data"  # 改这里
-        headers = {
-            "Content-Type": "application/json",
-            "access_token": self.access_token
-        }
-
         params = {
             "reqBody": {  # 包一层reqBody
                 "codes": codes,
@@ -161,12 +173,7 @@ class THSClient:
             }
         }
 
-        resp = requests.post(url, json=params, headers=headers, timeout=30)
-        result = resp.json()
-        print(f"DEBUG: {result}")  # 临时debug
-
-        if result.get('errorcode') != 0:
-            raise Exception(f"API请求失败: {result.get('errmsg', '未知错误')}")
+        result = self._request_with_auto_refresh(url, params, timeout=30)
 
         tables = result.get('tables', [])
         if not tables:
@@ -206,16 +213,9 @@ class THSClient:
         Returns:
             分钟级行情数据列表
         """
-        self._ensure_access_token()
-
         codes = codes.upper()
 
         url = f"{self.base_url}/high_frequency"
-        headers = {
-            "Content-Type": "application/json",
-            "access_token": self.access_token
-        }
-
         params = {
             "codes": codes,
             "indicators": "open,high,low,close,volume",
@@ -227,12 +227,7 @@ class THSClient:
             }
         }
 
-        resp = requests.post(url, json=params, headers=headers, timeout=30)
-        result = resp.json()
-        print(f"DEBUG: {result}")
-
-        if result.get('errorcode') != 0:
-            raise Exception(f"API请求失败: {result.get('errmsg', '未知错误')}")
+        result = self._request_with_auto_refresh(url, params, timeout=30)
 
         tables = result.get('tables', [])
         if not tables:
@@ -275,4 +270,3 @@ def main():
             print(f"  失败: {e}")
 if __name__ == '__main__':
     main()
-

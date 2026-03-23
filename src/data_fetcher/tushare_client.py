@@ -16,11 +16,13 @@ from typing import Optional, List
 from datetime import datetime, timedelta
 import time
 
-# 设置API地址
-client.DataApi._DataApi__http_url = "http://tushare.xyz"
+try:
+    from config.settings import TUSHARE_BASE_URL, TUSHARE_TOKEN
+except ImportError:
+    TUSHARE_BASE_URL = "http://tushare.xyz"
+    TUSHARE_TOKEN = ""
 
-# Token配置
-TUSHARE_TOKEN = "34337c3d66d26a15e1dd412f8ebf5ab31096f3c02a3ad60c4dd978dc"
+client.DataApi._DataApi__http_url = TUSHARE_BASE_URL
 
 
 class TushareClient:
@@ -28,6 +30,8 @@ class TushareClient:
 
     def __init__(self, token: str = None):
         self.token = token or TUSHARE_TOKEN
+        if not self.token:
+            raise ValueError("请先设置 TUSHARE_TOKEN 环境变量或 .env 配置")
         self.pro = ts.pro_api(self.token)
         
         # 缓存
@@ -218,6 +222,48 @@ class TushareClient:
         result = result.sort_values(['trade_date', 'delist_date'])
         
         return result
+
+    def update_all_contracts_daily(
+            self,
+            product: str,
+            existing_data: pd.DataFrame,
+            end_date: str,
+            min_oi: int = 100
+    ) -> pd.DataFrame:
+        """
+        基于现有缓存做增量更新。
+
+        Args:
+            product: 品种代码
+            existing_data: 已有缓存数据
+            end_date: 结束日期
+            min_oi: 最小持仓量过滤
+
+        Returns:
+            更新后的完整数据
+        """
+        if existing_data is None or existing_data.empty:
+            return self.get_all_contracts_daily(product, "20150401", end_date, min_oi)
+
+        existing = existing_data.copy()
+        existing["trade_date"] = existing["trade_date"].astype(str)
+
+        last_trade_date = existing["trade_date"].max()
+        target_end = end_date.replace("-", "")
+
+        if last_trade_date >= target_end:
+            return existing.sort_values(["trade_date", "delist_date"]).reset_index(drop=True)
+
+        next_start = (datetime.strptime(last_trade_date, "%Y%m%d") + timedelta(days=1)).strftime("%Y%m%d")
+        increment = self.get_all_contracts_daily(product, next_start, target_end, min_oi)
+
+        if increment is None or increment.empty:
+            return existing.sort_values(["trade_date", "delist_date"]).reset_index(drop=True)
+
+        merged = pd.concat([existing, increment], ignore_index=True)
+        merged = merged.drop_duplicates(subset=["ts_code", "trade_date"], keep="last")
+        merged = merged.sort_values(["trade_date", "delist_date"]).reset_index(drop=True)
+        return merged
 
     def get_dominant_daily(
             self,
