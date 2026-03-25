@@ -46,6 +46,7 @@ API_BASE_URL = os.getenv("THS_API_BASE_URL", "https://quantapi.51ifind.com/api/v
 
 TUSHARE_TOKEN = os.getenv("TUSHARE_TOKEN", "")
 TUSHARE_BASE_URL = os.getenv("TUSHARE_BASE_URL", "http://tushare.xyz")
+FRED_API_KEY = os.getenv("FRED_API_KEY", "")
 
 CONTRACTS: Dict[str, str] = {
     "ni_main": "niZL.SHF",
@@ -53,6 +54,11 @@ CONTRACTS: Dict[str, str] = {
 }
 
 QUOTE_FIELDS = "open;high;low;close;volume;amount;openInterest;settlement"
+
+PRODUCT_CONFIG: Dict[str, Dict[str, str]] = {
+    "NI": {"name": "沪镍", "exchange": "SHFE"},
+    "SS": {"name": "不锈钢", "exchange": "SHFE"},
+}
 
 DEFAULT_PRODUCT = "NI"
 DEFAULT_START_DATE = "20150401"

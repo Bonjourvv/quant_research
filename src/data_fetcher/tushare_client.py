@@ -17,10 +17,14 @@ from datetime import datetime, timedelta
 import time
 
 try:
-    from config.settings import TUSHARE_BASE_URL, TUSHARE_TOKEN
+    from config.settings import PRODUCT_CONFIG, TUSHARE_BASE_URL, TUSHARE_TOKEN
 except ImportError:
     TUSHARE_BASE_URL = "http://tushare.xyz"
     TUSHARE_TOKEN = ""
+    PRODUCT_CONFIG = {
+        "NI": {"name": "沪镍", "exchange": "SHFE"},
+        "SS": {"name": "不锈钢", "exchange": "SHFE"},
+    }
 
 client.DataApi._DataApi__http_url = TUSHARE_BASE_URL
 
@@ -98,29 +102,40 @@ class TushareClient:
         )
         return df
 
-    def get_ni_contracts(self) -> pd.DataFrame:
+    def get_product_contracts(self, product: str, exchange: Optional[str] = None) -> pd.DataFrame:
         """
-        获取沪镍所有合约列表
+        获取指定品种所有合约列表
         
         Returns:
             DataFrame with columns: ts_code, list_date, delist_date
         """
-        cache_key = 'ni_contracts'
+        product = product.upper()
+        product_meta = PRODUCT_CONFIG.get(product, {"exchange": exchange or "SHFE"})
+        exchange = exchange or product_meta["exchange"]
+        cache_key = f"{product.lower()}_contracts"
         if cache_key in self._contract_cache:
             return self._contract_cache[cache_key]
         
-        df = self.get_futures_basic('SHFE')
+        df = self.get_futures_basic(exchange)
         
-        # 筛选沪镍合约（NI开头，排除主力连续合约）
-        ni_df = df[
-            (df['fut_code'] == 'NI') & 
-            (~df['ts_code'].str.contains('L'))  # 排除NI.SHF, NIL.SHF等
+        # 筛选指定品种合约，排除主力连续合约
+        product_df = df[
+            (df['fut_code'] == product) &
+            (~df['ts_code'].str.contains('L'))
         ].copy()
         
-        ni_df = ni_df.sort_values('delist_date')
+        product_df = product_df.sort_values('delist_date')
         
-        self._contract_cache[cache_key] = ni_df
-        return ni_df
+        self._contract_cache[cache_key] = product_df
+        return product_df
+
+    def get_ni_contracts(self) -> pd.DataFrame:
+        """兼容旧接口：获取沪镍所有合约列表。"""
+        return self.get_product_contracts("NI")
+
+    def get_ss_contracts(self) -> pd.DataFrame:
+        """获取不锈钢所有合约列表。"""
+        return self.get_product_contracts("SS")
 
     def get_active_contracts_on_date(
             self, 
@@ -139,10 +154,8 @@ class TushareClient:
         """
         trade_date = trade_date.replace('-', '')
         
-        if product == 'NI':
-            contracts_df = self.get_ni_contracts()
-        else:
-            raise ValueError(f"暂不支持品种: {product}")
+        product = product.upper()
+        contracts_df = self.get_product_contracts(product)
         
         # 筛选在指定日期活跃的合约（已上市且未退市）
         active = contracts_df[
@@ -177,10 +190,8 @@ class TushareClient:
         start_date = start_date.replace('-', '')
         end_date = end_date.replace('-', '')
         
-        if product == 'NI':
-            contracts_df = self.get_ni_contracts()
-        else:
-            raise ValueError(f"暂不支持品种: {product}")
+        product = product.upper()
+        contracts_df = self.get_product_contracts(product)
         
         # 筛选在时间段内活跃的合约
         relevant_contracts = contracts_df[
@@ -286,8 +297,10 @@ class TushareClient:
         end_date = end_date.replace('-', '')
         
         # 获取主力合约映射
+        product = product.upper()
+        exchange = PRODUCT_CONFIG.get(product, {}).get("exchange", "SHFE")
         mapping = self.get_futures_mapping(
-            f"{product}.SHF",
+            f"{product}.{exchange[:3]}",
             start_date,
             end_date
         )
@@ -323,11 +336,11 @@ def main():
 
     ts_client = TushareClient()
 
-    # 测试获取沪镍合约列表
-    print("\n【沪镍合约列表】")
-    contracts = ts_client.get_ni_contracts()
-    print(f"共 {len(contracts)} 个合约")
-    print(contracts[['ts_code', 'list_date', 'delist_date']].head(10))
+    for product in ["NI", "SS"]:
+        print(f"\n【{product} 合约列表】")
+        contracts = ts_client.get_product_contracts(product)
+        print(f"共 {len(contracts)} 个合约")
+        print(contracts[['ts_code', 'list_date', 'delist_date']].head(10))
 
     # 测试获取指定日期活跃合约
     print("\n【2026-02-25 活跃合约】")

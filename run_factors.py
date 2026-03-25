@@ -7,15 +7,15 @@ from src.pipelines import ResearchConfig, run_mode
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="沪镍展期收益率因子分析")
+    parser = argparse.ArgumentParser(description="期货因子分析")
     parser.add_argument(
         "mode",
         nargs="?",
         default="all",
-        choices=["realtime", "history", "threshold", "ic", "momentum", "macd", "virtual_ratio", "all"],
+        choices=["realtime", "history", "threshold", "ic", "momentum", "macd", "virtual_ratio", "summary", "compare", "vix_panic", "ni_vix_panic", "all"],
         help="运行模式",
     )
-    parser.add_argument("--product", default="NI", help="研究品种，默认 NI")
+    parser.add_argument("--product", default="NI", help="研究品种，支持 NI / SS / ALL，默认 NI")
     parser.add_argument("--start-date", default="20150401", help="历史起始日，格式 YYYYMMDD")
     parser.add_argument("--end-date", default=None, help="历史结束日，默认今天")
     parser.add_argument("--min-oi", type=int, default=1000, help="最小持仓量过滤")

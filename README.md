@@ -1,6 +1,6 @@
-# 镍价因子研究系统
+# 镍/不锈钢研究系统
 
-这是一个面向期货研究的 Python 项目，当前以沪镍 `NI` 为核心研究对象，兼顾不锈钢 `SS` 的实时期限结构观察。
+这是一个面向期货研究的 Python 项目，当前已支持沪镍 `NI` 和不锈钢 `SS` 两个品种的完整研究链路，并额外包含 `VIX + RSI` 风格的策略回测模块。
 
 项目的目标不是单纯抓数据，而是把一条完整的研究链路串起来：
 
@@ -12,7 +12,7 @@
 
 ---
 
-## 目前已实现的因子
+## 目前已实现的研究模块
 
 ### 1. 展期收益率因子
 
@@ -81,6 +81,18 @@
 - 回测净值图
 - 实时主力合约快照解读
 
+### 5. 策略回测模块
+
+这部分和因子 IC 分析分开，主要放单标的择时策略。
+
+当前已支持：
+
+- `VIX + RSI` 标普500恐慌反转
+- `VIX + RSI` 沪镍主力连续恐慌反转
+- 策略净值图
+- 绩效摘要
+- 最新状态摘要
+
 ---
 
 ## 项目结构
@@ -90,17 +102,25 @@ nickel_research/
 ├── config/
 │   └── settings.py              # 配置中心
 ├── data/
+│   ├── raw/                     # 原始外部数据缓存（如 FRED）
 │   └── processed/               # 历史缓存、分析结果、图表输出
+├── scripts/
+│   └── fetch_fred_series.py     # FRED 序列抓取脚本
 ├── src/
 │   ├── data_fetcher/            # 数据源客户端
 │   │   ├── ths_client.py        # 同花顺实时数据
 │   │   └── tushare_client.py    # Tushare历史数据
+│   │   └── fred_client.py       # FRED宏观数据
 │   ├── factors/                 # 因子模块
 │   │   ├── roll_yield.py
 │   │   ├── momentum.py
 │   │   ├── macd.py
 │   │   ├── threshold.py
+│   │   ├── virtual_real_ratio.py
 │   │   └── ic_analysis.py
+│   ├── strategies/              # 单标的策略回测模块
+│   │   ├── vix_panic_reversion.py
+│   │   └── ni_vix_panic_reversion.py
 │   ├── pipelines/               # 研究流程编排
 │   └── plotting.py              # 图表公共配置
 ├── run_factors.py               # 统一 CLI 入口
@@ -134,12 +154,14 @@ cp .env.example .env
 ```bash
 THS_REFRESH_TOKEN=同花顺refresh_token
 TUSHARE_TOKEN=tushare_token
+FRED_API_KEY=fred_api_key
 ```
 
 说明：
 
 - `THS_REFRESH_TOKEN` 用于实时行情
 - `TUSHARE_TOKEN` 用于历史日线和合约数据
+- `FRED_API_KEY` 用于 VIX / 标普等宏观序列
 
 ---
 
@@ -160,6 +182,10 @@ python3 run_factors.py ic
 python3 run_factors.py momentum
 python3 run_factors.py macd
 python3 run_factors.py virtual_ratio
+python3 run_factors.py compare
+python3 run_factors.py summary
+python3 run_factors.py vix_panic
+python3 run_factors.py ni_vix_panic
 ```
 
 常用参数：
@@ -210,12 +236,12 @@ python3 run_factors.py history --no-cache
 
 常见文件：
 
-- `ni_contracts_daily.csv`：沪镍历史全合约日线缓存
-- `ni_roll_yield_weighted_avg.csv`：展期收益率历史序列
-- `ic_summary.csv`：IC 汇总
-- `group_returns.csv`：分组收益
-- `factor_returns.csv`：因子与未来收益对照表
-- `backtest_nav.csv`：回测净值序列
+- `ni_contracts_daily.csv` / `ss_contracts_daily.csv`：历史全合约日线缓存
+- `ni_roll_yield_weighted_avg.csv` / `ss_roll_yield_weighted_avg.csv`：展期收益率历史序列
+- `ni/` / `ss/`：按品种区分的图表和因子分析结果目录
+- `comparison/`：跨品种因子效果对比
+- `vix_panic_reversion/`：标普版 VIX+RSI 策略结果
+- `ni_vix_panic_reversion/`：沪镍版 VIX+RSI 策略结果
 
 图表输出示例：
 
@@ -237,18 +263,16 @@ python3 run_factors.py history --no-cache
 ### 已经比较完整支持
 
 - 沪镍 `NI`
-  历史数据、实时分析、因子分析、图表输出都已接通
-
-### 已部分支持
+  历史数据、实时分析、展期收益率、动量、MACD、虚实盘比、图表输出都已接通
 
 - 不锈钢 `SS`
-  当前主要用于实时期限结构观察
+  历史数据、实时分析、展期收益率、动量、MACD、虚实盘比、图表输出都已接通
 
 ---
 
 ## 如果后续要扩展到其他品种
 
-当前这套框架是可以扩品种的，但历史部分目前本质上还是以沪镍为主。
+当前这套框架已经支持 `NI` 和 `SS`，后续继续扩展到其他品种也比较直接。
 
 如果后续想加铜、铝、螺纹等品种，优先看这几个文件：
 
@@ -256,7 +280,7 @@ python3 run_factors.py history --no-cache
 这里维护默认配置和合约映射。
 
 [`src/data_fetcher/tushare_client.py`](/Users/vv/Downloads/nickel_research/src/data_fetcher/tushare_client.py)
-这里最关键。现在很多历史数据逻辑默认按 `NI` 写的，扩品种主要改这里。
+这里最关键。新品种扩展主要从这里补合约列表、历史日线和交易所映射。
 
 [`src/pipelines/factor_pipeline.py`](/Users/vv/Downloads/nickel_research/src/pipelines/factor_pipeline.py)
 这里控制整条研究流程，底层数据通用化后，这里基本可以直接复用。
@@ -271,11 +295,14 @@ python3 run_factors.py history --no-cache
 
 ## 直接运行单个因子文件
 
-以下文件可以直接单独运行，并且只使用真实历史数据，不再使用模拟数据：
+以下文件可以直接单独运行：
 
 ```bash
-python3 src/factors/macd.py
-python3 src/factors/momentum.py
+python3 src/factors/macd.py --product NI
+python3 src/factors/momentum.py --product SS
+python3 src/factors/virtual_real_ratio.py --product SS
+python3 src/strategies/vix_panic_reversion.py
+python3 src/strategies/ni_vix_panic_reversion.py
 ```
 
 如果缺少真实缓存，会直接报错提示先生成历史数据。
@@ -290,4 +317,3 @@ python3 src/factors/momentum.py
 - 可以做历史因子检验
 - 可以生成中文图表用于汇报
 - 可以继续往多因子组合和真实策略回测扩展
-

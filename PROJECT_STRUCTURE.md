@@ -1,359 +1,247 @@
-# 镍/不锈钢研究系统 - 项目结构详解
+# 镍/不锈钢研究系统 - 项目结构
 
-## 目录结构
+## 当前结构
 
-```
+```text
 nickel_research/
-│
-├── config/                     # 🔧 配置层
-│   ├── __init__.py            
-│   ├── settings.py            # API配置、合约代码等
-│   └── .token_cache.json      # access_token缓存（自动生成）
-│
-├── src/                        # 📦 核心代码层
+├── config/                         # 配置层
 │   ├── __init__.py
-│   │
-│   ├── data_fetcher/          # 数据获取模块
+│   ├── settings.py                 # 环境变量、默认参数、品种配置
+│   └── .token_cache.json           # 同花顺 access_token 缓存（自动生成）
+├── data/
+│   ├── raw/                        # 原始外部数据缓存
+│   │   └── fred/
+│   │       ├── sp500.csv
+│   │       └── vixcls.csv
+│   ├── processed/                  # 研究结果与图表输出
+│   │   ├── ni/                     # 沪镍因子输出
+│   │   ├── ss/                     # 不锈钢因子输出
+│   │   ├── summary/                # 双品种汇总页
+│   │   ├── comparison/             # 品种影响对比回测
+│   │   ├── vix_panic_reversion/    # 标普版 VIX+RSI 策略结果
+│   │   └── ni_vix_panic_reversion/ # 沪镍版 VIX+RSI 策略结果
+│   ├── ni_contracts_test.csv       # 临时测试数据
+│   └── VIXCLS.csv                  # 旧版手工下载文件
+├── scripts/
+│   └── fetch_fred_series.py        # FRED 时间序列抓取脚本
+├── src/
+│   ├── __init__.py
+│   ├── plotting.py                 # 中文字体与图表公共配置
+│   ├── data_fetcher/               # 数据源客户端
 │   │   ├── __init__.py
-│   │   └── ths_client.py      # 同花顺API客户端
-│   │
-│   └── factors/               # 因子计算模块
+│   │   ├── ths_client.py           # 同花顺实时/高频
+│   │   ├── tushare_client.py       # Tushare 历史期货数据
+│   │   └── fred_client.py          # FRED 宏观序列
+│   ├── factors/                    # 因子研究模块
+│   │   ├── __init__.py
+│   │   ├── roll_yield.py           # 展期收益率因子
+│   │   ├── momentum.py             # 价格动量因子
+│   │   ├── macd.py                 # MACD 因子
+│   │   ├── virtual_real_ratio.py   # 虚实盘比因子
+│   │   ├── threshold.py            # 分位数阈值
+│   │   └── ic_analysis.py          # IC / 分组收益 / 回测图
+│   ├── strategies/                 # 单标的策略回测模块
+│   │   ├── __init__.py
+│   │   ├── vix_panic_reversion.py  # 标普500 + VIX + RSI 策略
+│   │   └── ni_vix_panic_reversion.py
+│   │                                  # 沪镍主力连续 + VIX + RSI 策略
+│   └── pipelines/
 │       ├── __init__.py
-│       ├── roll_yield.py      # 展期收益率因子
-│       ├── momentum.py        # [待添加] 动量因子
-│       ├── basis.py           # [待添加] 基差因子
-│       └── inventory.py       # [待添加] 库存因子
-│
-├── data/                       # 📊 数据存储层
-│   ├── raw/                   # 原始数据
-│   └── processed/             # 处理后数据
-│
-├── logs/                       # 📝 日志
-│
-├── run_factors.py             # 🚀 主运行脚本
-├── requirements.txt           # 依赖包
-└── README.md                  # 说明文档
+│       └── factor_pipeline.py      # 所有模式的编排层
+├── run_factors.py                  # 统一 CLI 入口
+├── roll_yield_history.py           # 历史展期收益率兼容入口
+├── README.md                       # 使用说明
+├── PROJECT_STRUCTURE.md            # 本文件
+├── requirements.txt                # 依赖
+├── .env.example                    # 环境变量模板
+└── .env                            # 本地私有配置（不提交）
 ```
 
 ---
 
-## 各文件职责
+## 架构分层
 
-### 1. config/settings.py — 配置中心
+### 1. 配置层
 
-```python
-# 存放所有配置，方便统一修改
+核心文件：
+[`config/settings.py`](/Users/vv/Downloads/nickel_research/config/settings.py)
 
-REFRESH_TOKEN = "xxx"                    # 同花顺API令牌
-API_BASE_URL = "https://quantapi.51ifind.com/api/v1"
+职责：
 
-# 合约代码
-CONTRACTS = {
-    'ni_main': 'niZL.SHF',      # 沪镍主力
-    'ss_main': 'ssZL.SHF',      # 不锈钢主力
-}
+- 加载 `.env`
+- 提供 `THS / Tushare / FRED` 密钥
+- 定义默认参数
+- 维护品种配置，如 `NI / SS`
 
-# 你可以添加更多配置，比如：
-# ALERT_THRESHOLD = 0.05       # 信号阈值
-# DATA_START_DATE = '20260101' # 数据起始日期
-```
-
-**何时修改**：更换API token、调整参数阈值、添加新品种
+这层只负责“配置”，不负责业务逻辑。
 
 ---
 
-### 2. src/data_fetcher/ths_client.py — 数据获取
+### 2. 数据源层
 
-```python
-class THSClient:
-    """同花顺API的封装，所有数据请求都通过它"""
-    
-    def get_realtime_quote(self, codes):
-        """获取实时行情（盘中）"""
-        pass
-    
-    def get_history_quote(self, codes, start_date, end_date):
-        """获取历史行情（更稳定）"""
-        pass
-```
+目录：
+[`src/data_fetcher`](/Users/vv/Downloads/nickel_research/src/data_fetcher)
 
-**何时修改**：
-- API返回格式变了 → 修改解析逻辑
-- 需要新接口（如获取持仓量）→ 添加新方法
+包含三个客户端：
 
-**添加新数据源示例**：
-```python
-# 如果以后要加Mysteel数据，创建新文件
-# src/data_fetcher/mysteel_client.py
+- [`src/data_fetcher/ths_client.py`](/Users/vv/Downloads/nickel_research/src/data_fetcher/ths_client.py)
+  同花顺实时行情与分钟数据
+- [`src/data_fetcher/tushare_client.py`](/Users/vv/Downloads/nickel_research/src/data_fetcher/tushare_client.py)
+  期货历史日线、合约列表、主力映射
+- [`src/data_fetcher/fred_client.py`](/Users/vv/Downloads/nickel_research/src/data_fetcher/fred_client.py)
+  宏观序列，如 `VIXCLS`、`SP500`
 
-class MysteelClient:
-    def get_inventory(self, product):
-        """获取库存数据"""
-        pass
-```
+职责：
+
+- 对外部接口做统一封装
+- 返回标准化 DataFrame
+- 管理原始缓存
+
+这层不负责因子判断和策略信号。
 
 ---
 
-### 3. src/factors/ — 因子计算
+### 3. 因子研究层
 
-每个因子一个文件，结构统一：
+目录：
+[`src/factors`](/Users/vv/Downloads/nickel_research/src/factors)
 
-```python
-# src/factors/roll_yield.py
+当前包括：
 
-class RollYieldFactor:
-    """展期收益率因子"""
-    
-    def __init__(self, ths_client=None):
-        """初始化，可传入数据客户端"""
-        pass
-    
-    def calculate(self, near_price, far_price, near_days, far_days):
-        """核心计算逻辑（纯数学）"""
-        pass
-    
-    def fetch_roll_yield(self, product):
-        """获取数据 + 计算 + 返回结果"""
-        pass
-```
+- [`src/factors/roll_yield.py`](/Users/vv/Downloads/nickel_research/src/factors/roll_yield.py)
+- [`src/factors/momentum.py`](/Users/vv/Downloads/nickel_research/src/factors/momentum.py)
+- [`src/factors/macd.py`](/Users/vv/Downloads/nickel_research/src/factors/macd.py)
+- [`src/factors/virtual_real_ratio.py`](/Users/vv/Downloads/nickel_research/src/factors/virtual_real_ratio.py)
+- [`src/factors/threshold.py`](/Users/vv/Downloads/nickel_research/src/factors/threshold.py)
+- [`src/factors/ic_analysis.py`](/Users/vv/Downloads/nickel_research/src/factors/ic_analysis.py)
 
-**添加新因子步骤**：
+职责：
 
-1. 创建文件 `src/factors/momentum.py`
-2. 按相同结构写类
-3. 在 `src/factors/__init__.py` 中注册：
-   ```python
-   from .roll_yield import RollYieldFactor
-   from .momentum import MomentumFactor  # 新增
-   ```
-4. 在 `run_factors.py` 中调用
+- 计算因子值
+- 生成因子信号
+- 做 IC、分组收益、回测图
+
+这层回答的是：
+“这个指标有没有解释力？”
 
 ---
 
-### 4. run_factors.py — 主入口
+### 4. 策略回测层
 
-```python
-"""
-这是你日常运行的脚本
-职责：调用各个因子，汇总输出结果
-"""
+目录：
+[`src/strategies`](/Users/vv/Downloads/nickel_research/src/strategies)
 
-def main():
-    # 1. 加载配置/token
-    token = load_token()
-    
-    # 2. 计算各因子
-    analyze_product(token, 'ni', '沪镍')    # 展期收益率
-    # calculate_momentum(token, 'ni')       # [待添加] 动量
-    # calculate_basis(token, 'ni')          # [待添加] 基差
-    
-    # 3. 输出结果
+当前包括：
 
-if __name__ == '__main__':
-    main()
-```
+- [`src/strategies/vix_panic_reversion.py`](/Users/vv/Downloads/nickel_research/src/strategies/vix_panic_reversion.py)
+- [`src/strategies/ni_vix_panic_reversion.py`](/Users/vv/Downloads/nickel_research/src/strategies/ni_vix_panic_reversion.py)
 
-**何时修改**：添加新因子后，在这里调用
+职责：
+
+- 定义开平仓规则
+- 生成仓位序列
+- 做单标的净值回测
+- 输出绩效指标和策略图
+
+这层回答的是：
+“这套交易规则能不能赚钱？”
 
 ---
 
-## 如何添加新因子（以动量因子为例）
+### 5. 编排层
 
-### 第一步：创建因子文件
+核心文件：
+[`src/pipelines/factor_pipeline.py`](/Users/vv/Downloads/nickel_research/src/pipelines/factor_pipeline.py)
 
-```python
-# src/factors/momentum.py
+职责：
 
-import math
-from datetime import date, timedelta
+- 串联数据获取、因子计算、导出结果
+- 管理各模式入口
+- 生成汇总页与对比页
 
-class MomentumFactor:
-    """
-    动量因子
-    
-    公式: 过去N日收益率
-    含义: 正动量 = 趋势向上，负动量 = 趋势向下
-    """
-    
-    def __init__(self, lookback_days=20):
-        self.lookback_days = lookback_days
-    
-    def calculate(self, prices: list) -> float:
-        """
-        计算动量
-        
-        Args:
-            prices: 价格序列，从旧到新
-            
-        Returns:
-            动量值（收益率）
-        """
-        if len(prices) < 2:
-            return 0.0
-        return (prices[-1] / prices[0]) - 1
-    
-    def fetch_momentum(self, token, product):
-        """获取并计算动量"""
-        # 1. 调用API获取历史价格
-        # 2. 计算动量
-        # 3. 返回结果
-        pass
+支持的模式包括：
+
+- `realtime`
+- `history`
+- `threshold`
+- `ic`
+- `momentum`
+- `macd`
+- `virtual_ratio`
+- `summary`
+- `compare`
+- `vix_panic`
+- `ni_vix_panic`
+- `all`
+
+---
+
+### 6. 入口层
+
+核心文件：
+[`run_factors.py`](/Users/vv/Downloads/nickel_research/run_factors.py)
+
+职责：
+
+- 解析命令行参数
+- 创建 `ResearchConfig`
+- 调用 `run_mode`
+
+你日常基本只需要用这个文件。
+
+---
+
+## 数据流
+
+### 因子研究主线
+
+```text
+外部数据源
+  -> data_fetcher
+  -> factors
+  -> ic_analysis / 图表
+  -> data/processed/{ni|ss}/...
 ```
 
-### 第二步：注册因子
+### 策略回测主线
 
-```python
-# src/factors/__init__.py
-
-from .roll_yield import RollYieldFactor
-from .momentum import MomentumFactor  # 新增这行
-```
-
-### 第三步：在主脚本中调用
-
-```python
-# run_factors.py
-
-from src.factors.momentum import MomentumFactor
-
-def main():
-    # ... 现有代码 ...
-    
-    # 添加动量因子
-    print('\n【动量因子】')
-    momentum = MomentumFactor(lookback_days=20)
-    result = momentum.fetch_momentum(token, 'ni')
-    print(f'  沪镍20日动量: {result}')
+```text
+FRED / Tushare
+  -> strategies
+  -> 回测净值 / 绩效指标
+  -> data/processed/vix_panic_reversion 或 ni_vix_panic_reversion
 ```
 
 ---
 
-## 数据流向图
+## 当前最重要的输出目录
 
-```
-┌─────────────────┐
-│  同花顺API       │
-│  (外部数据源)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  ths_client.py  │  ← 数据获取层
-│  (API封装)       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  factors/       │  ← 因子计算层
-│  - roll_yield   │
-│  - momentum     │
-│  - basis        │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  run_factors.py │  ← 展示层
-│  (汇总输出)      │
-└─────────────────┘
-```
-````
-# print_analysis_report 里的循环
-for period in [5, 10, 20]:
-    result = self.calc_quantile_spread(period)
-```
+### 品种因子结果
 
-每个周期都独立执行一遍：
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  周期 = 5日                                                      │
-├─────────────────────────────────────────────────────────────────┤
-│  1. 计算每日的5日后收益                                          │
-│     df['fwd_ret_5d'] = close[T+5] / close[T] - 1                │
-│                                                                  │
-│  2. 去掉末尾5行（无法计算收益）                                   │
-│     valid = df.dropna()  → 有效样本N-5行                         │
-│                                                                  │
-│  3. 计算分位数阈值（基于有效样本）                                │
-│     25%分位 = -2.39%                                             │
-│     75%分位 = +2.96%                                             │
-│                                                                  │
-│  4. 筛选做多组/做空组                                            │
-│     做多组: RY ≤ -2.39%                                          │
-│     做空组: RY ≥ +2.96%                                          │
-│                                                                  │
-│  5. 计算各组的平均收益和胜率                                      │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-                         重复执行
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  周期 = 10日                                                     │
-│  ...（同上，但有效样本是N-10行，阈值略有不同）                    │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│  周期 = 20日                                                     │
-│  ...（同上，但有效样本是N-20行）                                  │
-└─────────────────────────────────────────────────────────────────┘
+- [`data/processed/ni`](/Users/vv/Downloads/nickel_research/data/processed/ni)
+- [`data/processed/ss`](/Users/vv/Downloads/nickel_research/data/processed/ss)
 
+### 双品种汇总
 
-````
-````
-df[f'fwd_ret_{n}d'] = df['close'].shift(-n) / df['close'] - 1
-```
+- [`data/processed/summary`](/Users/vv/Downloads/nickel_research/data/processed/summary)
 
-这行代码对**每一行**（每一个交易日）都计算一个5日收益：
+### 品种影响对比
 
-| 行 | T日 (信号日) | close[T] | T+5日 | close[T+5] | fwd_ret_5d |
-|---|-------------|----------|-------|------------|------------|
-| 0 | 2025-01-02 | 120000 | 2025-01-09 | 125000 | +4.17% |
-| 1 | 2025-01-03 | 121000 | 2025-01-10 | 124000 | +2.48% |
-| 2 | 2025-01-06 | 119000 | 2025-01-13 | 122000 | +2.52% |
-| 3 | 2025-01-07 | 122000 | 2025-01-14 | 121000 | -0.82% |
-| 4 | 2025-01-08 | 123000 | 2025-01-15 | 126000 | +2.44% |
-| ... | ... | ... | ... | ... | ... |
+- [`data/processed/comparison`](/Users/vv/Downloads/nickel_research/data/processed/comparison)
+
+### 策略回测
+
+- [`data/processed/vix_panic_reversion`](/Users/vv/Downloads/nickel_research/data/processed/vix_panic_reversion)
+- [`data/processed/ni_vix_panic_reversion`](/Users/vv/Downloads/nickel_research/data/processed/ni_vix_panic_reversion)
 
 ---
 
-## 图示
-```
-2025-01-02  01-03  01-06  01-07  01-08  01-09  01-10  01-13  01-14  01-15
-    │        │      │      │      │      │      │      │      │      │
-    T₀───────────────────────────►T₀+5   │      │      │      │
-             T₁────────────────────────►T₁+5   │      │      │
-                    T₂─────────────────────────►T₂+5  │      │
-                           T₃──────────────────────────►T₃+5 │
-                                  T₄───────────────────────────►T₄+5
-````
----
+## 当前存在的杂项
 
-## 命名规范
+目前仓库里还有几个非核心残留：
 
-| 类型 | 规范 | 示例 |
-|------|------|------|
-| 文件名 | 小写+下划线 | `roll_yield.py` |
-| 类名 | 大驼峰 | `RollYieldFactor` |
-| 函数名 | 小写+下划线 | `calculate_roll_yield()` |
-| 常量 | 全大写 | `API_BASE_URL` |
+- [`data/VIXCLS.csv`](/Users/vv/Downloads/nickel_research/data/VIXCLS.csv)
+- [`data/ni_contracts_test.csv`](/Users/vv/Downloads/nickel_research/data/ni_contracts_test.csv)
+- 异常目录 [`{config,src`](/Users/vv/Downloads/nickel_research/%7Bconfig,src)
 
----
-
-## 常见操作速查
-
-| 我想要... | 修改哪里 |
-|----------|---------|
-| 换API token | `config/settings.py` |
-| 添加新品种 | `run_factors.py` 中添加调用 |
-| 添加新因子 | 创建 `src/factors/xxx.py` |
-| 添加新数据源 | 创建 `src/data_fetcher/xxx.py` |
-| 修改信号阈值 | `run_factors.py` 中的 `get_signal()` |
-| 保存计算结果 | 写入 `data/processed/` |
-
----
-
-## 下一步建议
-
-1. **动量因子** — 最简单，只需要价格数据
-2. **基差因子** — 需要现货价格
-3. **库存因子** — 需要LME/上期所库存数据
-4. **综合信号** — 多因子加权打分
+这些不会影响运行，但属于后续可以继续清理的历史遗留物。
