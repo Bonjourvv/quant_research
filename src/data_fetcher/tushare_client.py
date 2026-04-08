@@ -15,6 +15,7 @@ import pandas as pd
 from typing import Optional, List
 from datetime import datetime, timedelta
 import time
+from requests.exceptions import RequestException
 
 try:
     from config.settings import PRODUCT_CONFIG, TUSHARE_BASE_URL, TUSHARE_TOKEN
@@ -32,15 +33,32 @@ client.DataApi._DataApi__http_url = TUSHARE_BASE_URL
 class TushareClient:
     """Tushare API客户端"""
 
-    def __init__(self, token: str = None):
+    def __init__(self, token: str = None, timeout: int = 60, max_retries: int = 3):
         self.token = token or TUSHARE_TOKEN
         if not self.token:
             raise ValueError("请先设置 TUSHARE_TOKEN 环境变量或 .env 配置")
-        self.pro = ts.pro_api(self.token)
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self.pro = ts.pro_api(self.token, timeout=self.timeout)
         
         # 缓存
         self._contract_cache = {}
         self._daily_cache = {}
+
+    def _query_with_retry(self, api_name: str, fields: str = "", **kwargs) -> pd.DataFrame:
+        """对 Tushare 查询增加重试，减少临时超时导致的整体失败。"""
+        last_error = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                return self.pro.query(api_name, fields=fields, **kwargs)
+            except (RequestException, TimeoutError, Exception) as exc:
+                last_error = exc
+                if attempt == self.max_retries:
+                    break
+                wait_seconds = min(2 * attempt, 5)
+                print(f"  Tushare 请求重试 {attempt}/{self.max_retries} 失败: {exc}，{wait_seconds}s 后重试...")
+                time.sleep(wait_seconds)
+        raise last_error
 
     def get_futures_daily(
             self,
@@ -59,11 +77,12 @@ class TushareClient:
         Returns:
             DataFrame with columns: trade_date, open, high, low, close, vol, oi
         """
-        df = self.pro.fut_daily(
+        df = self._query_with_retry(
+            "fut_daily",
             ts_code=ts_code,
             start_date=start_date.replace('-', ''),
             end_date=end_date.replace('-', ''),
-            fields="ts_code,trade_date,open,high,low,close,vol,oi"
+            fields="ts_code,trade_date,open,high,low,close,vol,oi",
         )
         return df
 
@@ -79,7 +98,8 @@ class TushareClient:
         Returns:
             DataFrame with mapping_ts_code (主力合约代码)
         """
-        df = self.pro.fut_mapping(
+        df = self._query_with_retry(
+            "fut_mapping",
             ts_code=ts_code,
             start_date=start_date.replace('-', ''),
             end_date=end_date.replace('-', ''),
@@ -96,9 +116,10 @@ class TushareClient:
         Returns:
             DataFrame with columns: ts_code, symbol, name, list_date, delist_date, etc.
         """
-        df = self.pro.fut_basic(
+        df = self._query_with_retry(
+            "fut_basic",
             exchange=exchange,
-            fields="ts_code,symbol,name,fut_code,list_date,delist_date,multiplier"
+            fields="ts_code,symbol,name,fut_code,list_date,delist_date,multiplier",
         )
         return df
 
@@ -275,6 +296,18 @@ class TushareClient:
         merged = merged.drop_duplicates(subset=["ts_code", "trade_date"], keep="last")
         merged = merged.sort_values(["trade_date", "delist_date"]).reset_index(drop=True)
         return merged
+
+    def get_latest_available_trade_date(
+            self,
+            ts_code: str,
+            start_date: str,
+            end_date: str,
+    ) -> Optional[str]:
+        """用历史行情接口探测某个合约当前最新可用交易日。"""
+        df = self.get_futures_daily(ts_code, start_date, end_date)
+        if df is None or df.empty:
+            return None
+        return str(df["trade_date"].astype(str).max())
 
     def get_dominant_daily(
             self,
