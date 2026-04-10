@@ -34,6 +34,7 @@ from src.factors.virtual_real_ratio import (
 from src.strategies.ni_vix_panic_reversion import NickelVIXPanicReversionStrategy
 from src.strategies.vix_panic_reversion import VIXPanicReversionStrategy
 from src.plotting import setup_chinese_font
+from src.reporting import export_factor_manual_pdf, export_pdf_report
 
 setup_chinese_font()
 
@@ -859,6 +860,33 @@ def run_all_products(config: ResearchConfig) -> None:
     print("=" * 80 + "\n")
 
 
+def run_pdf_report(config: ResearchConfig) -> Path:
+    _print_header("[PDF] 研究报告导出")
+
+    product = config.product.upper()
+    if product == "ALL":
+        summary_path = config.output_dir / "summary" / "latest_factor_summary.md"
+        if not summary_path.exists():
+            print("未找到双品种摘要，先生成 summary...")
+            run_summary(replace(config, product="ALL"))
+    else:
+        product_dir = _get_output_base_dir(config)
+        if not (product_dir / "latest_summary.md").exists():
+            print("未找到品种摘要，先生成完整分析结果...")
+            run_all(config)
+
+    pdf_path = export_pdf_report(product=product, output_dir=config.output_dir)
+    print(f"PDF 已导出到: {pdf_path}")
+    return pdf_path
+
+
+def run_factor_manual_pdf(config: ResearchConfig) -> Path:
+    _print_header("[PDF] 因子手册导出")
+    pdf_path = export_factor_manual_pdf(output_dir=config.output_dir)
+    print(f"因子手册已导出到: {pdf_path}")
+    return pdf_path
+
+
 def run_mode(mode: str, config: Optional[ResearchConfig] = None) -> None:
     config = config or ResearchConfig()
 
@@ -889,6 +917,10 @@ def run_mode(mode: str, config: Optional[ResearchConfig] = None) -> None:
         run_vix_panic_reversion(config)
     elif mode == "ni_vix_panic":
         run_nickel_vix_panic_reversion(config)
+    elif mode == "pdf":
+        run_pdf_report(config)
+    elif mode == "manual_pdf":
+        run_factor_manual_pdf(config)
     else:
         if mode == "all":
             run_all_products(replace(config, product="ALL"))
