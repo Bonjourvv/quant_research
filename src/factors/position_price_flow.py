@@ -79,6 +79,12 @@ class PositionPriceFlowFactor:
 
         df = self.generate_signals(df)
         df["position_flow_score"] = df["signal"].map(self.SIGNAL_SCORE).fillna(0)
+        # 在离散信号分值上叠加价格/持仓变化幅度，避免分组回测时只有少量重复档位。
+        df["position_flow_factor"] = (
+            df["position_flow_score"]
+            + df["price_change"].fillna(0) * 10
+            + df["oi_change_pct"].fillna(0) * 10
+        )
         return df
 
     def generate_signals(self, factor_data: pd.DataFrame) -> pd.DataFrame:

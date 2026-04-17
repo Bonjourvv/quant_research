@@ -33,15 +33,15 @@ class ThresholdCalculator:
     
     def calc_fixed_threshold(
             self,
-            bullish_quantile: float = 0.25,
-            bearish_quantile: float = 0.75
+            bullish_quantile: float = 0.10,
+            bearish_quantile: float = 0.90
     ) -> Dict:
         """
         计算固定阈值（全历史分位数）
         
         Args:
-            bullish_quantile: 做多阈值分位数（默认25%，贴水区域）
-            bearish_quantile: 做空阈值分位数（默认75%，升水区域）
+            bullish_quantile: 做多阈值分位数（默认10%，贴水区域）
+            bearish_quantile: 做空阈值分位数（默认90%，升水区域）
         """
         if self.history is None:
             raise ValueError("请先加载历史数据")
@@ -72,8 +72,8 @@ class ThresholdCalculator:
     def calc_rolling_threshold(
             self,
             window: int = 252,
-            bullish_quantile: float = 0.25,
-            bearish_quantile: float = 0.75
+            bullish_quantile: float = 0.10,
+            bearish_quantile: float = 0.90
     ) -> pd.DataFrame:
         """计算滚动窗口阈值"""
         if self.history is None:

@@ -20,7 +20,7 @@ from scipy import stats
 from typing import Dict, List, Tuple
 import os
 
-from src.plotting import setup_chinese_font
+from src.plotting import plot_seasonal_chart, setup_chinese_font
 
 setup_chinese_font()
 
@@ -55,6 +55,10 @@ class FactorICAnalyzer:
         mapping = {
             "roll_yield": "展期收益率",
             "momentum": "价格动量",
+            "virtual_real_ratio": "虚实盘比",
+            "roll_virtual_combo": "展期+虚实盘",
+            "position_price_flow": "持仓价格联动",
+            "intraday_skew": "5分钟偏度",
             "macd": "MACD",
         }
         return mapping.get(self.factor_name, self.factor_name)
@@ -158,7 +162,7 @@ class FactorICAnalyzer:
         
         return group_stats, long_short
     
-    def calc_quantile_spread(self, period: int = 5, long_q: float = 0.25, short_q: float = 0.75) -> Dict:
+    def calc_quantile_spread(self, period: int = 5, long_q: float = 0.10, short_q: float = 0.90) -> Dict:
         """计算分位数多空组合收益"""
         df = self.calc_forward_returns([period])
         ret_col = f'fwd_ret_{period}d'
@@ -187,7 +191,7 @@ class FactorICAnalyzer:
             'long_short_ret': long_group[ret_col].mean() - short_group[ret_col].mean(),
         }
 
-    def run_quantile_backtest(self, period: int = 3, long_q: float = 0.25, short_q: float = 0.75) -> pd.DataFrame:
+    def run_quantile_backtest(self, period: int = 3, long_q: float = 0.10, short_q: float = 0.90) -> pd.DataFrame:
         """按因子分位数构建持有期为 period 的多空策略净值。"""
         df = self.data.copy().sort_values("trade_date").reset_index(drop=True)
 
@@ -229,6 +233,7 @@ class FactorICAnalyzer:
         nav_path = os.path.join(output_dir, f"{prefix}_backtest_nav.png")
         ic_path = os.path.join(output_dir, f"{prefix}_rolling_ic.png")
         group_path = os.path.join(output_dir, f"{prefix}_group_returns.png")
+        seasonal_path = os.path.join(output_dir, f"{prefix}_seasonal.png")
 
         fig, ax = plt.subplots(figsize=(12, 6))
         ax.plot(backtest["trade_date"], backtest["strategy_nav"], label="策略净值", linewidth=2)
@@ -238,7 +243,7 @@ class FactorICAnalyzer:
         ax.grid(alpha=0.2)
         ax.legend()
         fig.tight_layout()
-        fig.savefig(nav_path, dpi=160)
+        fig.savefig(nav_path, dpi=320)
         plt.close(fig)
 
         fig, ax = plt.subplots(figsize=(12, 4))
@@ -248,7 +253,7 @@ class FactorICAnalyzer:
         ax.set_ylabel("IC")
         ax.grid(alpha=0.2)
         fig.tight_layout()
-        fig.savefig(ic_path, dpi=160)
+        fig.savefig(ic_path, dpi=320)
         plt.close(fig)
 
         fig, ax = plt.subplots(figsize=(10, 5))
@@ -259,13 +264,22 @@ class FactorICAnalyzer:
         ax.axhline(0, color="black", linewidth=1)
         ax.grid(axis="y", alpha=0.2)
         fig.tight_layout()
-        fig.savefig(group_path, dpi=160)
+        fig.savefig(group_path, dpi=320)
         plt.close(fig)
+
+        plot_seasonal_chart(
+            self.data,
+            value_col="factor_value",
+            output_path=seasonal_path,
+            title=f"{self._factor_label_zh()}季节图（2022-2026）",
+            y_label="因子值",
+        )
 
         return {
             "nav_chart": nav_path,
             "rolling_ic_chart": ic_path,
             "group_chart": group_path,
+            "seasonal_chart": seasonal_path,
         }
     
     def print_analysis_report(self, periods: List[int] = [1, 3, 5, 10, 20]):
@@ -312,7 +326,7 @@ class FactorICAnalyzer:
         print(f"\n  多空组合收益差: {long_short*100:+.3f}%")
         
         # 分位数策略
-        print(f"\n【分位数策略分析 (25%/75%分位)】")
+        print(f"\n【分位数策略分析 (10%/90%分位)】")
         for period in [3, 5, 10, 20]:
             result = self.calc_quantile_spread(period)
             print(f"\n  {period}日周期:")

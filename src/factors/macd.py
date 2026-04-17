@@ -26,7 +26,8 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.plotting import setup_chinese_font
+from src.plotting import plot_seasonal_chart, setup_chinese_font
+from src.denoise import add_switch_noise_flag, rolling_median_series
 
 setup_chinese_font()
 
@@ -38,7 +39,9 @@ class MACDFactor:
             self,
             fast_period: int = 12,
             slow_period: int = 26,
-            signal_period: int = 9
+            signal_period: int = 9,
+            denoise: bool = False,
+            smooth_window: int = 3,
     ):
         """
         初始化
@@ -51,6 +54,8 @@ class MACDFactor:
         self.fast_period = fast_period
         self.slow_period = slow_period
         self.signal_period = signal_period
+        self.denoise = denoise
+        self.smooth_window = smooth_window
     
     def calc_ema(self, series: pd.Series, period: int) -> pd.Series:
         """
@@ -78,6 +83,9 @@ class MACDFactor:
         """
         df = price_data.copy()
         df = df.sort_values('trade_date').reset_index(drop=True)
+        if self.denoise:
+            df['close_raw'] = df['close']
+            df['close'] = rolling_median_series(df['close'], self.smooth_window)
         
         # 计算EMA
         df['ema_fast'] = self.calc_ema(df['close'], self.fast_period)
@@ -175,6 +183,8 @@ class MACDFactor:
         df['signal'] = 0
         df.loc[df['golden_cross'], 'signal'] = 1
         df.loc[df['death_cross'], 'signal'] = -1
+        if self.denoise and 'switch_noise' in df.columns:
+            df.loc[df['switch_noise'], 'signal'] = 0
         
         # 持仓：信号发出后一直持有，直到反向信号
         df['position'] = 0
@@ -384,7 +394,7 @@ class MACDFactor:
         ax_macd.grid(alpha=0.2)
 
         fig.tight_layout()
-        fig.savefig(output_path, dpi=160)
+        fig.savefig(output_path, dpi=320)
         plt.close(fig)
         return output_path
 
@@ -401,6 +411,13 @@ class MACDFactor:
         # 导出MACD数据
         signal_data.to_csv(f'{output_dir}/macd_signals.csv', index=False)
         self.plot_macd_chart(signal_data, f'{output_dir}/macd_chart.png')
+        plot_seasonal_chart(
+            signal_data,
+            value_col="macd_hist",
+            output_path=f"{output_dir}/macd_seasonal.png",
+            title="MACD季节图（2022-2026）",
+            y_label="MACD柱",
+        )
         
         print(f"MACD数据已导出到: {output_dir}/macd_signals.csv")
 
@@ -490,7 +507,7 @@ def load_dominant_price(contracts_data: pd.DataFrame) -> pd.DataFrame:
     
     dominant['trade_date'] = pd.to_datetime(dominant['trade_date'])
     dominant = dominant.sort_values('trade_date').reset_index(drop=True)
-    
+    dominant = add_switch_noise_flag(dominant, code_col='dominant_code')
     return dominant
 
 

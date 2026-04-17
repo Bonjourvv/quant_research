@@ -58,6 +58,7 @@ class VIXPanicReversionStrategy:
         vix_z_entry: float = 1.0,
         max_holding_days: int = 10,
         capital0: float = 10000.0,
+        reverse: bool = False,
     ):
         self.rsi_window = rsi_window
         self.rsi_entry = rsi_entry
@@ -66,6 +67,7 @@ class VIXPanicReversionStrategy:
         self.vix_z_entry = vix_z_entry
         self.max_holding_days = max_holding_days
         self.capital0 = capital0
+        self.reverse = reverse
         self.underlying_name = "标普500指数"
         self.chart_title = "VIX + RSI 恐慌反转策略"
 
@@ -132,6 +134,8 @@ class VIXPanicReversionStrategy:
 
         # 用下一根K线执行信号，避免用当日收盘信息在同一根K线上成交。
         data["strategy_position"] = data["position"].shift(1).fillna(0)
+        if self.reverse:
+            data["strategy_position"] = -data["strategy_position"]
         return data.dropna().reset_index(drop=True)
 
     def backtest(self, signal_data: pd.DataFrame) -> pd.DataFrame:
@@ -213,7 +217,7 @@ class VIXPanicReversionStrategy:
 
         fig.tight_layout()
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        fig.savefig(output_path, dpi=160)
+        fig.savefig(output_path, dpi=320)
         plt.close(fig)
         return output_path
 

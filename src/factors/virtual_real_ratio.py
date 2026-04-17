@@ -62,6 +62,7 @@ class VirtualRealRatioFactor:
         df["vol_change"] = df["vol"].diff()
         df["oi_change_pct"] = df["oi"].pct_change()
         df["vol_change_pct"] = df["vol"].pct_change()
+
         df["ratio_zscore"] = (
             (df["virtual_real_ratio"] - df["virtual_real_ratio"].rolling(60, min_periods=20).mean())
             / df["virtual_real_ratio"].rolling(60, min_periods=20).std()
@@ -79,8 +80,8 @@ class VirtualRealRatioFactor:
         df["signal"] = "neutral"
         df["signal_text"] = "虚实盘比平稳，短线与持仓结构均衡"
 
-        bullish_mask = (ratio <= ratio.rolling(120, min_periods=30).quantile(0.25)) & (oi_change > 0)
-        bearish_mask = (ratio >= ratio.rolling(120, min_periods=30).quantile(0.75)) & (oi_change < 0)
+        bullish_mask = (ratio <= ratio.rolling(120, min_periods=30).quantile(0.10)) & (oi_change > 0)
+        bearish_mask = (ratio >= ratio.rolling(120, min_periods=30).quantile(0.90)) & (oi_change < 0)
         active_mask = (zscore >= 1.0) & (~bearish_mask)
 
         df.loc[bullish_mask, "signal"] = "bullish"

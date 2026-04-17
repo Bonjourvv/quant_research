@@ -25,6 +25,7 @@ except ImportError:
     PRODUCT_CONFIG = {
         "NI": {"name": "沪镍", "exchange": "SHFE"},
         "SS": {"name": "不锈钢", "exchange": "SHFE"},
+        "CU": {"name": "沪铜", "exchange": "SHFE"},
     }
 
 client.DataApi._DataApi__http_url = TUSHARE_BASE_URL

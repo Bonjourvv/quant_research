@@ -12,7 +12,7 @@ def main() -> None:
         "mode",
         nargs="?",
         default="all",
-        choices=["realtime", "history", "threshold", "ic", "momentum", "macd", "virtual_ratio", "summary", "compare", "vix_panic", "ni_vix_panic", "pdf", "manual_pdf", "all"],
+        choices=["realtime", "history", "threshold", "ic", "momentum", "macd", "virtual_ratio", "intraday_skew", "roll_virtual_combo", "position_flow", "summary", "compare", "denoise_compare", "vix_panic", "ni_vix_panic", "commodity_vix_panic", "vix_compare", "vix_compare_reverse", "pdf", "manual_pdf", "all"],
         help="运行模式",
     )
     parser.add_argument("--product", default="NI", help="研究品种，支持 NI / SS / ALL，默认 NI")
@@ -26,6 +26,8 @@ def main() -> None:
         help="展期收益率汇总方法",
     )
     parser.add_argument("--no-cache", action="store_true", help="不使用本地缓存")
+    parser.add_argument("--denoise", action="store_true", help="开启 MACD 轻量降噪")
+    parser.add_argument("--smooth-window", type=int, default=3, help="MACD 平滑窗口，默认 3")
 
     args = parser.parse_args()
     config = ResearchConfig(
@@ -35,6 +37,8 @@ def main() -> None:
         min_oi=args.min_oi,
         ry_method=args.ry_method,
         use_cache=not args.no_cache,
+        denoise=args.denoise,
+        smooth_window=args.smooth_window,
     )
     run_mode(args.mode, config)
 

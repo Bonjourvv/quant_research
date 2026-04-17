@@ -11,6 +11,7 @@ from typing import Iterable, List, Sequence
 import matplotlib.image as mpimg
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 
 from config.settings import PROCESSED_DATA_DIR, PRODUCT_CONFIG
@@ -54,6 +55,26 @@ FACTOR_EXPLANATIONS = {
         "description": (
             "用成交量和持仓量的关系判断市场更偏短线换手还是增仓沉淀。虚实盘比高，"
             "通常说明交易活跃但筹码沉淀有限；虚实盘比较低，则更可能体现增仓趋势。"
+        ),
+    },
+    "intraday_skew": {
+        "title": "5分钟偏度因子",
+        "description": (
+            "用日内 5 分钟收益率分布的偏度衡量价格路径是否存在明显的不对称。"
+            "偏度显著偏高时，更像冲高后的拥挤交易；偏度显著偏低时，更像恐慌后的超跌状态。"
+        ),
+    },
+    "roll_virtual_combo": {
+        "title": "展期 + 虚实盘组合因子",
+        "description": (
+            "把展期收益率和虚实盘比标准化后加权合成，重点识别期限结构与成交持仓结构"
+            "是否形成同向共振。"
+        ),
+    },
+    "position_flow": {
+        "title": "持仓-价格联动因子",
+        "description": (
+            "把价格涨跌和持仓增减组合起来，识别多头增仓、空头增仓、空头回补与多头离场。"
         ),
     },
     "strategy": {
@@ -144,6 +165,22 @@ FACTOR_MANUAL_ENTRIES = [
         ],
     },
     {
+        "name": "5分钟偏度因子",
+        "formula_tex": [
+            r"$skew_t=E\left[\left(\dfrac{ret_i-\mu_{5min}}{\sigma_{5min}}\right)^3\right]$",
+        ],
+        "definitions": [
+            r"$ret_i$: 回看期内商品期货的 5 分钟收益率序列。",
+            r"$\mu_{5min}$: 回看期内所有 5 分钟收益率的均值。",
+            r"$\sigma_{5min}$: 回看期内所有 5 分钟收益率的标准差。",
+        ],
+        "logic": [
+            r"$skew_t$ 显著偏高时，通常表示价格上行尾部更长，短期更容易在情绪回落后承压。",
+            r"$skew_t$ 显著偏低时，通常表示价格下行尾部更长，恐慌释放后更容易出现反弹。",
+            r"把 $ret_i$ 拆成正收益与负收益子样本，还可以得到上行偏度和下行偏度。",
+        ],
+    },
+    {
         "name": "RSI 指标",
         "formula_tex": [
             r"$RSI=100-\dfrac{100}{1+RS}$",
@@ -213,6 +250,16 @@ def _read_markdown_lines(path: Path) -> List[str]:
     return lines
 
 
+def _read_summary_kv(path: Path) -> dict[str, str]:
+    data: dict[str, str] = {}
+    for line in _read_markdown_lines(path):
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        data[key.strip()] = value.strip()
+    return data
+
+
 def _wrap_lines(lines: Sequence[str], width: int = 34) -> List[str]:
     wrapped: List[str] = []
     for line in lines:
@@ -222,6 +269,11 @@ def _wrap_lines(lines: Sequence[str], width: int = 34) -> List[str]:
         chunks = textwrap.wrap(line, width=width) or [line]
         wrapped.extend(chunks)
     return wrapped
+
+
+def _wrap_cell_text(value: object, width: int) -> str:
+    text = str(value)
+    return textwrap.fill(text, width=width, break_long_words=False, break_on_hyphens=False)
 
 
 def _new_page() -> tuple[plt.Figure, plt.Axes]:
@@ -275,6 +327,161 @@ def _render_text_page(
     plt.close(fig)
 
 
+def _clean_signal_text(value: str) -> str:
+    mapping = {
+        "sideways": "震荡",
+        "uptrend": "上行",
+        "strong_uptrend": "强上行",
+        "downtrend": "下行",
+        "strong_downtrend": "强下行",
+        "contango": "升水",
+        "backwardation": "贴水",
+        "neutral": "中性",
+        "long_buildup": "多头增仓",
+        "short_buildup": "空头增仓",
+        "short_covering": "空头回补",
+        "long_unwinding": "多头离场",
+    }
+    return mapping.get(str(value), str(value))
+
+
+def _render_product_overview_table(pdf: PdfPages, summary_csv: Path) -> None:
+    fig, _ = _new_page()
+    _draw_page_shell(fig, "多品种总览", "核心因子状态一页对比，适合打印汇报时快速浏览。")
+
+    if not summary_csv.exists():
+        _add_footer(fig, f"未找到汇总表: {summary_csv}")
+        pdf.savefig(fig)
+        plt.close(fig)
+        return
+
+    df = pd.read_csv(summary_csv)
+    if df.empty:
+        _add_footer(fig, f"汇总表为空: {summary_csv}")
+        pdf.savefig(fig)
+        plt.close(fig)
+        return
+
+    display_primary = pd.DataFrame(
+        {
+            "品种": df["品种"],
+            "日期": df["历史最新日期"],
+            "展期": df["展期收益率"].astype(str) + " / " + df["实时展期信号"].map(_clean_signal_text).astype(str),
+            "动量": df["动量趋势"].map(_clean_signal_text).astype(str) + " / " + df["动量信号"].astype(str),
+            "MACD": df["MACD趋势"].map(_clean_signal_text).astype(str) + " / " + df["MACD持仓"].astype(str),
+            "虚实盘": df["虚实盘比"].astype(str) + " / " + df["虚实盘信号"].map(_clean_signal_text).astype(str),
+            "持仓联动": df["持仓联动"].map(_clean_signal_text).astype(str),
+        }
+    )
+
+    intraday_values = []
+    combo_values = []
+    for _, row in df.iterrows():
+        code = str(row["代码"]).lower()
+        base_dir = summary_csv.parent.parent / code
+        intraday_summary = _read_summary_kv(base_dir / "intraday_skew" / "latest_summary.md")
+        combo_summary = _read_summary_kv(base_dir / "roll_virtual_combo" / "latest_summary.md")
+        intraday_values.append(
+            f"{intraday_summary.get('偏度因子', '--')} / {_clean_signal_text(intraday_summary.get('交易信号', '--'))}"
+        )
+        combo_values.append(
+            f"{combo_summary.get('组合得分', '--')} / {_clean_signal_text(combo_summary.get('交易信号', '--'))}"
+        )
+
+    display_secondary = pd.DataFrame(
+        {
+            "品种": df["品种"],
+            "5分钟偏度": intraday_values,
+            "组合因子": combo_values,
+            "偏度解读": [
+                _read_summary_kv(summary_csv.parent.parent / str(code).lower() / "intraday_skew" / "latest_summary.md").get("信号解读", "--")
+                for code in df["代码"]
+            ],
+            "组合解读": [
+                _read_summary_kv(summary_csv.parent.parent / str(code).lower() / "roll_virtual_combo" / "latest_summary.md").get("信号解读", "--")
+                for code in df["代码"]
+            ],
+        }
+    )
+    display_secondary["偏度解读"] = display_secondary["偏度解读"].map(lambda x: _wrap_cell_text(x, 16))
+    display_secondary["组合解读"] = display_secondary["组合解读"].map(lambda x: _wrap_cell_text(x, 16))
+    display_secondary["5分钟偏度"] = display_secondary["5分钟偏度"].map(lambda x: _wrap_cell_text(x, 10))
+    display_secondary["组合因子"] = display_secondary["组合因子"].map(lambda x: _wrap_cell_text(x, 10))
+
+    col_labels = list(display_primary.columns)
+    cell_text = display_primary.values.tolist()
+    col_widths = [0.10, 0.12, 0.18, 0.15, 0.16, 0.14, 0.15]
+
+    ax_table_1 = fig.add_axes([0.08, 0.56, 0.84, 0.18])
+    ax_table_1.axis("off")
+    table = ax_table_1.table(
+        cellText=cell_text,
+        colLabels=col_labels,
+        colWidths=col_widths,
+        loc="center",
+        cellLoc="center",
+        colLoc="center",
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(9.2)
+    table.scale(1, 1.8)
+
+    for (row, col), cell in table.get_celld().items():
+        cell.set_edgecolor("#d9d9d9")
+        cell.set_linewidth(0.7)
+        if row == 0:
+            cell.set_facecolor("#f2f2f2")
+            cell.set_text_props(weight="bold", color=TEXT)
+        else:
+            cell.set_facecolor("#ffffff" if row % 2 == 1 else "#fbfbfb")
+
+    col_labels_2 = list(display_secondary.columns)
+    cell_text_2 = display_secondary.values.tolist()
+    col_widths_2 = [0.10, 0.16, 0.16, 0.29, 0.29]
+
+    ax_table_2 = fig.add_axes([0.08, 0.29, 0.84, 0.18])
+    ax_table_2.axis("off")
+    table2 = ax_table_2.table(
+        cellText=cell_text_2,
+        colLabels=col_labels_2,
+        colWidths=col_widths_2,
+        loc="center",
+        cellLoc="center",
+        colLoc="center",
+    )
+    table2.auto_set_font_size(False)
+    table2.set_fontsize(8.0)
+    table2.scale(1, 2.7)
+
+    for (row, col), cell in table2.get_celld().items():
+        cell.set_edgecolor("#d9d9d9")
+        cell.set_linewidth(0.7)
+        if row == 0:
+            cell.set_facecolor("#f2f2f2")
+            cell.set_text_props(weight="bold", color=TEXT)
+        else:
+            cell.set_facecolor("#ffffff" if row % 2 == 1 else "#fbfbfb")
+            if col >= 3:
+                cell.set_text_props(ha="left", va="center")
+
+    fig.text(0.10, 0.24, "重点解读", fontsize=12.5, fontweight="bold", color=TEXT, va="top")
+
+    y = 0.205
+    for _, row in df.iterrows():
+        line = (
+            f"{row['品种']}：展期 {row['展期收益率']}，动量 {_clean_signal_text(row['动量趋势'])}，"
+            f"MACD {_clean_signal_text(row['MACD趋势'])}，持仓联动 {_clean_signal_text(row['持仓联动'])}。"
+        )
+        fig.text(0.10, y, f"- {line}", fontsize=10.2, color=TEXT, va="top")
+        y -= 0.03
+        if y < 0.10:
+            break
+
+    _add_footer(fig, f"汇总表来源: {summary_csv}")
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
 def _render_cover_page(pdf: PdfPages, title: str, subtitle_lines: Sequence[str]) -> None:
     fig, _ = _new_page()
     fig.patches.extend(
@@ -290,6 +497,50 @@ def _render_cover_page(pdf: PdfPages, title: str, subtitle_lines: Sequence[str])
     for line in subtitle_lines:
         fig.text(0.12, y, line, fontsize=12, color=TEXT)
         y -= 0.045
+
+    pdf.savefig(fig)
+    plt.close(fig)
+
+
+def _render_toc_page(
+    pdf: PdfPages,
+    title: str,
+    entries: Sequence[dict],
+    footer: str | None = None,
+    subtitle: str | None = None,
+) -> None:
+    fig, _ = _new_page()
+    _draw_page_shell(fig, title, subtitle)
+
+    y = 0.80
+    for entry in entries:
+        page_no = entry.get("page")
+        page_text = f"{page_no}" if page_no is not None else ""
+        label = entry.get("label", "")
+        level = int(entry.get("level", 0))
+        indent = 0.02 * level
+        font_size = 12 if level == 0 else 10.8
+        font_weight = "bold" if level == 0 else "normal"
+        color = TEXT if level == 0 else "#333333"
+
+        fig.text(0.10 + indent, y, label, fontsize=font_size, fontweight=font_weight, color=color, va="top")
+        fig.text(0.88, y, page_text, fontsize=10.5, color=MUTED, va="top", ha="right")
+        fig.lines.append(
+            plt.Line2D(
+                [0.10 + indent + 0.18, 0.85],
+                [y - 0.008, y - 0.008],
+                transform=fig.transFigure,
+                color="#d8d8d8",
+                linewidth=0.6,
+                linestyle=(0, (1.5, 3)),
+            )
+        )
+        y -= 0.032 if level == 0 else 0.026
+        if y < 0.11:
+            break
+
+    if footer:
+        _add_footer(fig, footer)
 
     pdf.savefig(fig)
     plt.close(fig)
@@ -345,33 +596,20 @@ def _get_image_dimensions(image_path: Path) -> tuple[int, int]:
 
 
 def _draw_single_image_card(fig: plt.Figure, image_path: Path, left: float, bottom: float, width: float, height: float, caption: str) -> None:
-    fig.patches.append(
-        patches.Rectangle(
-            (left, bottom),
-            width,
-            height,
-            transform=fig.transFigure,
-            facecolor="#f2f7fd",
-            edgecolor="#c4d6e8",
-            linewidth=1.0,
-            zorder=-7,
-        )
-    )
-
     img_w, img_h = _get_image_dimensions(image_path)
-    box_w = width - 0.04
-    box_h = height - 0.09
+    box_w = width
+    box_h = height - 0.035
     scale = min(box_w / img_w, box_h / img_h)
     draw_w = img_w * scale
     draw_h = img_h * scale
     x = left + (width - draw_w) / 2
-    y = bottom + 0.05 + (box_h - draw_h) / 2
+    y = bottom + (box_h - draw_h) / 2
 
     ax = fig.add_axes([x, y, draw_w, draw_h])
     ax.imshow(mpimg.imread(image_path), interpolation="nearest")
     ax.axis("off")
 
-    fig.text(left + 0.02, bottom + height - 0.03, caption, fontsize=10.5, color=TEXT, va="top", fontweight="bold")
+    fig.text(left, bottom + height + 0.008, caption, fontsize=10.2, color=TEXT, va="bottom", fontweight="bold")
 
 
 def _render_image_gallery_page(
@@ -384,29 +622,20 @@ def _render_image_gallery_page(
     if not images:
         return
 
-    fig, _ = _new_page()
-    _draw_page_shell(fig, title, subtitle)
+    for start in range(0, len(images), 2):
+        page_images = images[start : start + 2]
+        fig, _ = _new_page()
+        page_subtitle = subtitle if len(images) <= 2 else f"{subtitle}（第 {start // 2 + 1} 页）"
+        _draw_page_shell(fig, title, page_subtitle)
+        if len(page_images) == 1:
+            _draw_single_image_card(fig, page_images[0], 0.09, 0.14, 0.82, 0.68, page_images[0].stem.replace("_", " "))
+        else:
+            _draw_single_image_card(fig, page_images[0], 0.09, 0.49, 0.82, 0.30, page_images[0].stem.replace("_", " "))
+            _draw_single_image_card(fig, page_images[1], 0.09, 0.14, 0.82, 0.30, page_images[1].stem.replace("_", " "))
 
-    if len(images) == 1:
-        _draw_single_image_card(fig, images[0], 0.10, 0.16, 0.80, 0.62, images[0].stem.replace("_", " "))
-    else:
-        top_images = images[:2]
-        for idx, image_path in enumerate(top_images):
-            left = 0.10 if idx == 0 else 0.52
-            _draw_single_image_card(fig, image_path, left, 0.49, 0.34, 0.28, image_path.stem.replace("_", " "))
-
-        remaining = images[2:]
-        if remaining:
-            if len(remaining) == 1:
-                _draw_single_image_card(fig, remaining[0], 0.10, 0.14, 0.76, 0.26, remaining[0].stem.replace("_", " "))
-            else:
-                for idx, image_path in enumerate(remaining[:2]):
-                    left = 0.10 if idx == 0 else 0.52
-                    _draw_single_image_card(fig, image_path, left, 0.14, 0.34, 0.26, image_path.stem.replace("_", " "))
-
-    _add_footer(fig, "图表按原始比例居中排版，避免拉伸失真。")
-    pdf.savefig(fig)
-    plt.close(fig)
+        _add_footer(fig, "图表直接贴图并按原始比例排版，减少边框和缩放干扰。")
+        pdf.savefig(fig)
+        plt.close(fig)
 
 
 def _factor_section(
@@ -433,6 +662,45 @@ def _factor_section(
     _render_image_gallery_page(pdf, f"{title} 图表", list(image_paths), subtitle="图表页")
 
 
+def _build_single_product_toc(product: str) -> List[dict]:
+    entries: List[dict] = []
+    page = 2
+    entries.append({"label": "目录", "page": page, "level": 0})
+    page += 1
+
+    for section in _collect_product_sections(PROCESSED_DATA_DIR / product.lower()):
+        entries.append({"label": section["title"], "page": page, "level": 0})
+        entries.append({"label": "说明与最新摘要", "page": page, "level": 1})
+        entries.append({"label": "图表页", "page": page + 1, "level": 1})
+        page += 2
+
+    strategy = _collect_strategy_section(PROCESSED_DATA_DIR, product)
+    entries.append({"label": strategy["title"], "page": page, "level": 0})
+    entries.append({"label": "说明与最新摘要", "page": page, "level": 1})
+    entries.append({"label": "图表页", "page": page + 1, "level": 1})
+    return entries
+
+
+def _build_all_products_toc(products: Sequence[str]) -> List[dict]:
+    entries: List[dict] = []
+    page = 2
+    entries.append({"label": "目录", "page": page, "level": 0})
+    page += 1
+    entries.append({"label": "多品种总览", "page": page, "level": 0})
+    page += 1
+
+    for product in products:
+        entries.append({"label": f"{_get_product_name(product)} 专题", "page": page, "level": 0})
+        for section in _collect_product_sections(PROCESSED_DATA_DIR / product.lower()):
+            entries.append({"label": section["title"], "page": page, "level": 1})
+            page += 2
+        strategy = _collect_strategy_section(PROCESSED_DATA_DIR, product)
+        entries.append({"label": strategy["title"], "page": page, "level": 1})
+        page += 2
+
+    return entries
+
+
 def _collect_product_sections(base_dir: Path) -> List[dict]:
     return [
         {
@@ -440,6 +708,7 @@ def _collect_product_sections(base_dir: Path) -> List[dict]:
             "description": FACTOR_EXPLANATIONS["roll_yield"]["description"],
             "summary": base_dir / "latest_summary.md",
             "images": [
+                base_dir / "roll_yield_seasonal.png",
                 base_dir / "roll_yield_rolling_ic.png",
                 base_dir / "roll_yield_group_returns.png",
                 base_dir / "roll_yield_backtest_nav.png",
@@ -450,6 +719,7 @@ def _collect_product_sections(base_dir: Path) -> List[dict]:
             "description": FACTOR_EXPLANATIONS["momentum"]["description"],
             "summary": base_dir / "momentum" / "latest_summary.md",
             "images": [
+                base_dir / "momentum" / "momentum_seasonal.png",
                 base_dir / "momentum" / "momentum_rolling_ic.png",
                 base_dir / "momentum" / "momentum_group_returns.png",
                 base_dir / "momentum" / "momentum_backtest_nav.png",
@@ -461,6 +731,7 @@ def _collect_product_sections(base_dir: Path) -> List[dict]:
             "summary": base_dir / "macd" / "latest_summary.md",
             "images": [
                 base_dir / "macd" / "macd_chart.png",
+                base_dir / "macd" / "macd_seasonal.png",
             ],
         },
         {
@@ -468,9 +739,43 @@ def _collect_product_sections(base_dir: Path) -> List[dict]:
             "description": FACTOR_EXPLANATIONS["virtual_ratio"]["description"],
             "summary": base_dir / "virtual_ratio" / "latest_summary.md",
             "images": [
+                base_dir / "virtual_ratio" / "virtual_real_ratio_seasonal.png",
                 base_dir / "virtual_ratio" / "virtual_real_ratio_rolling_ic.png",
                 base_dir / "virtual_ratio" / "virtual_real_ratio_group_returns.png",
                 base_dir / "virtual_ratio" / "virtual_real_ratio_backtest_nav.png",
+            ],
+        },
+        {
+            "title": FACTOR_EXPLANATIONS["intraday_skew"]["title"],
+            "description": FACTOR_EXPLANATIONS["intraday_skew"]["description"],
+            "summary": base_dir / "intraday_skew" / "latest_summary.md",
+            "images": [
+                base_dir / "intraday_skew" / "intraday_skew_seasonal.png",
+                base_dir / "intraday_skew" / "intraday_skew_rolling_ic.png",
+                base_dir / "intraday_skew" / "intraday_skew_group_returns.png",
+                base_dir / "intraday_skew" / "intraday_skew_backtest_nav.png",
+            ],
+        },
+        {
+            "title": FACTOR_EXPLANATIONS["roll_virtual_combo"]["title"],
+            "description": FACTOR_EXPLANATIONS["roll_virtual_combo"]["description"],
+            "summary": base_dir / "roll_virtual_combo" / "latest_summary.md",
+            "images": [
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_seasonal.png",
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_rolling_ic.png",
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_group_returns.png",
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_backtest_nav.png",
+            ],
+        },
+        {
+            "title": FACTOR_EXPLANATIONS["position_flow"]["title"],
+            "description": FACTOR_EXPLANATIONS["position_flow"]["description"],
+            "summary": base_dir / "position_flow" / "latest_summary.md",
+            "images": [
+                base_dir / "position_flow" / "position_price_flow_seasonal.png",
+                base_dir / "position_flow" / "position_price_flow_rolling_ic.png",
+                base_dir / "position_flow" / "position_price_flow_group_returns.png",
+                base_dir / "position_flow" / "position_price_flow_backtest_nav.png",
             ],
         },
     ]
@@ -488,7 +793,7 @@ def _collect_strategy_section(report_dir: Path, product: str) -> dict:
 
 
 def export_pdf_report(product: str, output_dir: Path | None = None) -> Path:
-    """生成研究 PDF 报告。"""
+    """生成数据图表 PDF 报告。"""
     product = product.upper()
     report_dir = output_dir or PROCESSED_DATA_DIR
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -497,38 +802,30 @@ def export_pdf_report(product: str, output_dir: Path | None = None) -> Path:
 
     if product == "ALL":
         summary_path = report_dir / "summary" / "latest_factor_summary.md"
-        pdf_path = report_dir / "summary" / "factor_report.pdf"
+        pdf_path = report_dir / "summary" / "chart_report.pdf"
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        products = ["NI", "SS"]
 
         with PdfPages(pdf_path) as pdf:
             _render_cover_page(
                 pdf,
-                "双品种研究报告",
+                "双品种数据图表报告",
                 [
                     f"生成时间: {timestamp}",
-                    "内容包括双品种摘要、因子解释与主要图表。",
-                    "版式已针对打印阅读优化。",
+                    "内容包括目录、多品种总览、摘要与数据图表。",
+                    "本报告不再混入因子手册，便于单独打印图表。",
                 ],
             )
-            _render_text_page(
+            _render_toc_page(
                 pdf,
-                "双品种摘要",
-                _read_markdown_lines(summary_path) or ["当前未找到双品种摘要，请先运行 summary 或 all。"],
-                footer=f"摘要来源: {summary_path}",
-                subtitle="概览页",
+                "目录",
+                _build_all_products_toc(products),
+                subtitle="章节与页码概览",
+                footer="完整报告目录",
             )
-
-            for item in ["NI", "SS"]:
+            _render_product_overview_table(pdf, report_dir / "summary" / "latest_factor_summary.csv")
+            for item in products:
                 product_base = report_dir / item.lower()
-                _render_text_page(
-                    pdf,
-                    f"{_get_product_name(item)} 报告说明",
-                    [
-                        f"品种: {_get_product_name(item)}",
-                        "以下页面依次展示该品种的因子解释、最新摘要和图表。",
-                    ],
-                    subtitle="章节页",
-                )
                 for section in _collect_product_sections(product_base):
                     _factor_section(
                         pdf,
@@ -548,20 +845,26 @@ def export_pdf_report(product: str, output_dir: Path | None = None) -> Path:
         return pdf_path
 
     base_dir = report_dir / product.lower()
-    pdf_path = base_dir / f"{product.lower()}_factor_report.pdf"
+    pdf_path = base_dir / f"{product.lower()}_chart_report.pdf"
     pdf_path.parent.mkdir(parents=True, exist_ok=True)
 
     with PdfPages(pdf_path) as pdf:
         _render_cover_page(
             pdf,
-            f"{_get_product_name(product)} 研究报告",
+            f"{_get_product_name(product)} 数据图表报告",
             [
                 f"生成时间: {timestamp}",
-                "内容包括因子解释、最新摘要和主要图表。",
-                "版式已针对打印阅读优化。",
+                "内容包括目录、最新摘要和主要图表。",
+                "本报告只保留数据图表部分，便于单独打印。",
             ],
         )
-
+        _render_toc_page(
+            pdf,
+            "目录",
+            _build_single_product_toc(product),
+            subtitle="章节与页码概览",
+            footer=f"{_get_product_name(product)} 报告目录",
+        )
         for section in _collect_product_sections(base_dir):
             _factor_section(
                 pdf,

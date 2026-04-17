@@ -58,6 +58,7 @@ QUOTE_FIELDS = "open;high;low;close;volume;amount;openInterest;settlement"
 PRODUCT_CONFIG: Dict[str, Dict[str, str]] = {
     "NI": {"name": "沪镍", "exchange": "SHFE"},
     "SS": {"name": "不锈钢", "exchange": "SHFE"},
+    "CU": {"name": "沪铜", "exchange": "SHFE"},
 }
 
 DEFAULT_PRODUCT = "NI"
