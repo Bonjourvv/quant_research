@@ -30,59 +30,75 @@ MUTED = "#666666"
 FACTOR_EXPLANATIONS = {
     "roll_yield": {
         "title": "展期收益率因子",
-        "description": (
-            "通过比较近月和远月合约价格，判断期限结构处于升水还是贴水。"
-            "负值通常对应 backwardation，往往意味着现货偏紧；正值通常对应 contango，"
-            "往往意味着供给更宽松。"
-        ),
+        "description": [
+            "定义：展期收益率衡量近月与远月合约价格在到期时间差上的年化斜率，本质上刻画期货期限结构的升贴水状态。",
+            "经济含义：当远月价格显著高于近月价格时，期限结构偏 contango，多头移仓通常面临展期成本；当近月价格高于远月价格时，期限结构偏 backwardation，往往反映现货或近端交割资源偏紧。",
+            "信号解释：极端低位的展期收益率通常用于识别近端紧张和潜在多头支撑；极端高位则更偏向库存压力、供应宽松或远月升水过高后的回落风险。",
+            "使用注意：该因子更适合作为商品基本面结构信号，不宜单独等同于趋势信号，最好与价格动量、持仓结构或库存信息一起确认。",
+        ],
     },
     "momentum": {
         "title": "动量因子",
-        "description": (
-            "用近一段时间的价格变化衡量趋势是否延续。动量为正且趋势强时，"
-            "更偏向顺势；动量转弱时，更适合观察趋势衰减或震荡。"
-        ),
+        "description": [
+            "定义：动量因子使用过去 N 日价格收益率和短长均线相对位置衡量趋势方向与趋势强度。",
+            "经济含义：商品价格存在趋势延续和资金追随特征，当价格持续上涨且短期均线位于长期均线上方时，说明多头趋势仍有惯性；反之则说明空头趋势占优。",
+            "信号解释：动量为正且趋势强度为正时偏多，动量为负且趋势强度为负时偏空；两者方向不一致时通常视为震荡或趋势衰减。",
+            "使用注意：动量因子容易在高波动或快速反转阶段失效，因此更适合作为趋势过滤器，而不是孤立的开仓依据。",
+        ],
     },
     "macd": {
         "title": "MACD 因子",
-        "description": (
-            "通过 DIF、DEA 和柱状图观察趋势强弱与拐点。适合识别金叉、死叉以及"
-            "趋势加速或减速的阶段。"
-        ),
+        "description": [
+            "定义：MACD 通过快慢指数移动平均线的差值 DIF、信号线 DEA 以及 MACD 柱状图衡量趋势方向和动能变化。",
+            "经济含义：DIF 与 DEA 的相对位置代表短期趋势和中期趋势的强弱对比，柱状图扩大说明趋势动能增强，柱状图收敛说明趋势可能进入衰减阶段。",
+            "信号解释：DIF 上穿 DEA 通常视为金叉，代表趋势由弱转强；DIF 下穿 DEA 通常视为死叉，代表趋势由强转弱。当前报告同时展示价格、DIF、DEA 和柱状图，便于观察信号发生的位置。",
+            "使用注意：MACD 属于趋势类技术指标，在震荡市中容易产生频繁假信号，因此报告中会结合历史信号胜率和季节图判断其稳定性。",
+        ],
     },
     "virtual_ratio": {
         "title": "虚实盘比因子",
-        "description": (
-            "用成交量和持仓量的关系判断市场更偏短线换手还是增仓沉淀。虚实盘比高，"
-            "通常说明交易活跃但筹码沉淀有限；虚实盘比较低，则更可能体现增仓趋势。"
-        ),
+        "description": [
+            "定义：虚实盘比等于成交量除以持仓量，用于衡量单位持仓对应的成交活跃度。",
+            "经济含义：虚实盘比偏高说明市场换手频繁、短线博弈较强，但不一定代表趋势资金沉淀；虚实盘比较低且持仓增加时，通常表示筹码更稳定，趋势资金更可能在持续建仓。",
+            "信号解释：低虚实盘比叠加增仓偏向多头沉淀，高虚实盘比叠加减仓偏向短线资金离场；若只有虚实盘比抬升但持仓没有配合，则更多是活跃度信号。",
+            "使用注意：该因子对成交量异常放大较敏感，解释时应同时观察持仓变化，避免把单日高换手误判为趋势信号。",
+        ],
     },
     "intraday_skew": {
         "title": "5分钟偏度因子",
-        "description": (
-            "用日内 5 分钟收益率分布的偏度衡量价格路径是否存在明显的不对称。"
-            "偏度显著偏高时，更像冲高后的拥挤交易；偏度显著偏低时，更像恐慌后的超跌状态。"
-        ),
+        "description": [
+            "定义：5分钟偏度因子基于主力合约日内 5 分钟收益率序列，计算标准化收益的三阶矩，用于衡量日内价格分布的不对称性。",
+            "经济含义：偏度为正说明日内收益分布右尾更长，价格上冲或短线追涨行为更明显；偏度为负说明左尾更长，盘中下杀或恐慌释放更明显。",
+            "信号解释：理论上，低偏度可能对应情绪释放后的均值回归机会，高偏度可能对应冲高后的回落风险；报告同时拆分上行偏度和下行偏度，用于观察买盘与卖盘尾部力量。",
+            "使用注意：该因子依赖分钟数据，样本窗口和主力合约切换会影响稳定性。当前更适合作为情绪和日内结构辅助信号，方向需要结合具体品种的历史 IC 和分组收益验证。",
+        ],
     },
     "roll_virtual_combo": {
         "title": "展期 + 虚实盘组合因子",
-        "description": (
-            "把展期收益率和虚实盘比标准化后加权合成，重点识别期限结构与成交持仓结构"
-            "是否形成同向共振。"
-        ),
+        "description": [
+            "定义：组合因子将展期收益率和虚实盘比分别做滚动标准化后加权合成，并在两个信号方向一致时给予共振增强。",
+            "经济含义：展期收益率代表期限结构和基本面松紧，虚实盘比代表资金换手和持仓沉淀。两者结合后，可以同时观察“基本面结构”和“交易结构”是否一致。",
+            "信号解释：当贴水结构与低虚实盘比、增仓沉淀同时出现时，偏向更高质量的多头信号；当升水结构与高虚实盘比、减仓换手同时出现时，偏向更高风险的空头信号。",
+            "使用注意：组合因子的优势在于减少单因子噪声，但权重设定会影响结果。当前默认更偏重展期收益率，后续可通过权重扫描寻找不同品种的最优组合。",
+        ],
     },
     "position_flow": {
         "title": "持仓-价格联动因子",
-        "description": (
-            "把价格涨跌和持仓增减组合起来，识别多头增仓、空头增仓、空头回补与多头离场。"
-        ),
+        "description": [
+            "定义：持仓-价格联动因子同时观察价格变化和持仓变化，将市场状态划分为多头增仓、空头增仓、空头回补、多头离场和震荡观望。",
+            "经济含义：价格上涨且持仓增加，通常表示多头主动增仓；价格下跌且持仓增加，通常表示空头主动增仓；价格上涨但持仓下降，更可能是空头回补；价格下跌且持仓下降，则可能是多头离场。",
+            "信号解释：该因子重点回答“价格变化背后是谁在推动”，比单纯价格涨跌更接近资金行为解释。",
+            "使用注意：持仓变化在主力切换、交割临近和极端交易日容易跳变，因此更适合作为资金结构判断，而不是单独交易信号。",
+        ],
     },
     "strategy": {
         "title": "VIX + RSI 策略",
-        "description": (
-            "把价格超卖和风险情绪抬升结合起来，寻找恐慌后的反转机会。"
-            "报告中会展示最新状态摘要和净值图，方便直接汇报。"
-        ),
+        "description": [
+            "定义：VIX + RSI 策略将外部风险情绪和价格超卖状态结合，用于寻找恐慌冲击后的反转交易窗口。",
+            "经济含义：VIX 抬升代表全球风险偏好下降，RSI 进入低位代表标的价格短期超卖。两者同时出现时，市场可能已经进入情绪集中释放阶段。",
+            "信号解释：策略在恐慌升温且价格超卖时建立反转仓位，在 RSI 修复、VIX 回落或持仓时间达到上限时退出。",
+            "使用注意：该策略本质是低频事件驱动，不是连续持仓策略。它的收益主要来自少数恐慌窗口，因此需要重点观察交易次数、暴露度和最大回撤。",
+        ],
     },
 }
 
@@ -325,6 +341,20 @@ def _render_text_page(
 
     pdf.savefig(fig)
     plt.close(fig)
+
+
+def _format_explanation_lines(explanation: str | Sequence[str]) -> List[str]:
+    """把因子解释格式化成更适合汇报页阅读的多行说明。"""
+    if isinstance(explanation, str):
+        return ["因子解释", f"- {explanation}"]
+
+    lines = ["因子解释"]
+    for item in explanation:
+        item_text = str(item).strip()
+        if not item_text:
+            continue
+        lines.append(f"- {item_text}")
+    return lines
 
 
 def _clean_signal_text(value: str) -> str:
@@ -596,20 +626,57 @@ def _get_image_dimensions(image_path: Path) -> tuple[int, int]:
 
 
 def _draw_single_image_card(fig: plt.Figure, image_path: Path, left: float, bottom: float, width: float, height: float, caption: str) -> None:
+    fig.patches.append(
+        patches.Rectangle(
+            (left, bottom),
+            width,
+            height,
+            transform=fig.transFigure,
+            facecolor="#ffffff",
+            edgecolor="#e2e2e2",
+            linewidth=0.8,
+            zorder=-6,
+        )
+    )
     img_w, img_h = _get_image_dimensions(image_path)
-    box_w = width
-    box_h = height - 0.035
+    caption_h = 0.026
+    pad = 0.012
+    box_w = width - pad * 2
+    box_h = height - caption_h - pad * 2
     scale = min(box_w / img_w, box_h / img_h)
     draw_w = img_w * scale
     draw_h = img_h * scale
-    x = left + (width - draw_w) / 2
-    y = bottom + (box_h - draw_h) / 2
+    x = left + pad + (box_w - draw_w) / 2
+    y = bottom + pad + (box_h - draw_h) / 2
 
     ax = fig.add_axes([x, y, draw_w, draw_h])
     ax.imshow(mpimg.imread(image_path), interpolation="nearest")
     ax.axis("off")
 
-    fig.text(left, bottom + height + 0.008, caption, fontsize=10.2, color=TEXT, va="bottom", fontweight="bold")
+    fig.text(left + pad, bottom + height - 0.012, caption, fontsize=9.4, color=TEXT, va="top", fontweight="bold")
+
+
+def _image_aspect_ratio(image_path: Path) -> float:
+    width, height = _get_image_dimensions(image_path)
+    return width / height if height else 1.0
+
+
+def _gallery_slots_for_count(count: int, images: Sequence[Path]) -> List[tuple[float, float, float, float]]:
+    """返回适合一页展示 1-3 张图的卡片布局。"""
+    if count == 1:
+        return [(0.09, 0.14, 0.82, 0.68)]
+
+    if count == 2:
+        avg_aspect = sum(_image_aspect_ratio(path) for path in images) / max(len(images), 1)
+        if avg_aspect < 1.25:
+            return [(0.09, 0.14, 0.39, 0.68), (0.52, 0.14, 0.39, 0.68)]
+        return [(0.09, 0.48, 0.82, 0.31), (0.09, 0.13, 0.82, 0.31)]
+
+    return [
+        (0.09, 0.51, 0.39, 0.29),
+        (0.52, 0.51, 0.39, 0.29),
+        (0.09, 0.14, 0.82, 0.29),
+    ]
 
 
 def _render_image_gallery_page(
@@ -622,18 +689,16 @@ def _render_image_gallery_page(
     if not images:
         return
 
-    for start in range(0, len(images), 2):
-        page_images = images[start : start + 2]
+    for start in range(0, len(images), 3):
+        page_images = images[start : start + 3]
         fig, _ = _new_page()
-        page_subtitle = subtitle if len(images) <= 2 else f"{subtitle}（第 {start // 2 + 1} 页）"
+        page_subtitle = subtitle if len(images) <= 3 else f"{subtitle}（第 {start // 3 + 1} 页）"
         _draw_page_shell(fig, title, page_subtitle)
-        if len(page_images) == 1:
-            _draw_single_image_card(fig, page_images[0], 0.09, 0.14, 0.82, 0.68, page_images[0].stem.replace("_", " "))
-        else:
-            _draw_single_image_card(fig, page_images[0], 0.09, 0.49, 0.82, 0.30, page_images[0].stem.replace("_", " "))
-            _draw_single_image_card(fig, page_images[1], 0.09, 0.14, 0.82, 0.30, page_images[1].stem.replace("_", " "))
 
-        _add_footer(fig, "图表直接贴图并按原始比例排版，减少边框和缩放干扰。")
+        for image_path, slot in zip(page_images, _gallery_slots_for_count(len(page_images), page_images)):
+            _draw_single_image_card(fig, image_path, *slot, image_path.stem.replace("_", " "))
+
+        _add_footer(fig, "图表按原始比例置入网格；每页集中展示 2-3 张图，便于打印汇报时横向比较。")
         pdf.savefig(fig)
         plt.close(fig)
 
@@ -641,11 +706,11 @@ def _render_image_gallery_page(
 def _factor_section(
     pdf: PdfPages,
     title: str,
-    explanation: str,
+    explanation: str | Sequence[str],
     summary_path: Path,
     image_paths: Iterable[Path],
 ) -> None:
-    lines = [f"因子解释：{explanation}"]
+    lines = _format_explanation_lines(explanation)
     summary_lines = _read_markdown_lines(summary_path)
     if summary_lines:
         lines.extend(["", "最新摘要：", *summary_lines])
