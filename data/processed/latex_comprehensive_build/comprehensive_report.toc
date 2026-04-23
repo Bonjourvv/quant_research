@@ -1,0 +1,62 @@
+\contentsline {section}{\numberline {1}报告说明}{3}{section.1}%
+\contentsline {section}{\numberline {2}研究方法与系统说明}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}数据来源与刷新机制}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}历史分位数与阈值选择}{3}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}交易信号与解释逻辑}{3}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}因子回测与评估逻辑}{3}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}策略扩展模块}{4}{subsection.2.5}%
+\contentsline {section}{\numberline {3}因子手册与公式说明}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}展期收益率因子}{4}{subsection.3.1}%
+\contentsline {paragraph}{公式}{4}{subsection.3.1}%
+\contentsline {paragraph}{变量定义}{4}{subsection.3.1}%
+\contentsline {paragraph}{业务含义}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}价格动量因子}{4}{subsection.3.2}%
+\contentsline {paragraph}{公式}{4}{subsection.3.2}%
+\contentsline {paragraph}{变量定义}{4}{subsection.3.2}%
+\contentsline {paragraph}{业务含义}{5}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}MACD 因子}{5}{subsection.3.3}%
+\contentsline {paragraph}{公式}{5}{subsection.3.3}%
+\contentsline {paragraph}{变量定义}{5}{subsection.3.3}%
+\contentsline {paragraph}{业务含义}{5}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}虚实盘比因子}{5}{subsection.3.4}%
+\contentsline {paragraph}{公式}{5}{subsection.3.4}%
+\contentsline {paragraph}{变量定义}{5}{subsection.3.4}%
+\contentsline {paragraph}{业务含义}{5}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}持仓-价格联动因子}{5}{subsection.3.5}%
+\contentsline {paragraph}{公式}{5}{subsection.3.5}%
+\contentsline {paragraph}{变量定义}{6}{subsection.3.5}%
+\contentsline {paragraph}{业务含义}{6}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}5分钟偏度因子}{6}{subsection.3.6}%
+\contentsline {paragraph}{公式}{6}{subsection.3.6}%
+\contentsline {paragraph}{变量定义}{6}{subsection.3.6}%
+\contentsline {paragraph}{业务含义}{6}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}RSI 指标}{6}{subsection.3.7}%
+\contentsline {paragraph}{公式}{6}{subsection.3.7}%
+\contentsline {paragraph}{变量定义}{6}{subsection.3.7}%
+\contentsline {paragraph}{业务含义}{7}{subsection.3.7}%
+\contentsline {subsection}{\numberline {3.8}VIX 情绪因子}{7}{subsection.3.8}%
+\contentsline {paragraph}{公式}{7}{subsection.3.8}%
+\contentsline {paragraph}{变量定义}{7}{subsection.3.8}%
+\contentsline {paragraph}{业务含义}{7}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}VIX + RSI 恐慌反转策略}{7}{subsection.3.9}%
+\contentsline {paragraph}{公式}{7}{subsection.3.9}%
+\contentsline {paragraph}{变量定义}{7}{subsection.3.9}%
+\contentsline {paragraph}{业务含义}{7}{subsection.3.9}%
+\contentsline {section}{\numberline {4}沪镍 专题}{7}{section.4}%
+\contentsline {subsection}{\numberline {4.1}最新因子状态总览}{7}{subsection.4.1}%
+\contentsline {subsubsection}{\numberline {4.1.1}沪镍 历史分位数}{8}{subsubsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.2}展期收益率因子}{8}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}价格动量因子}{13}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}MACD 因子}{18}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}虚实盘比因子}{21}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}5分钟偏度因子}{26}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}展期+虚实盘组合因子}{31}{subsection.4.7}%
+\contentsline {subsection}{\numberline {4.8}持仓-价格联动因子}{36}{subsection.4.8}%
+\contentsline {section}{\numberline {5}策略扩展研究}{41}{section.5}%
+\contentsline {subsection}{\numberline {5.1}VIX + 标普500 恐慌反转策略}{41}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}VIX + 沪镍 恐慌反转策略}{43}{subsection.5.2}%
+\contentsline {section}{\numberline {6}对比研究与附加实验}{45}{section.6}%
+\contentsline {subsection}{\numberline {6.1}品种影响对比}{45}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}MACD 降噪实验}{48}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}VIX 策略跨标的对比}{51}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}VIX 反向策略对比}{53}{subsection.6.4}%

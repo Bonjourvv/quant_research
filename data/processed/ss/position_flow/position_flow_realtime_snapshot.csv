@@ -1,0 +1,2 @@
+contract_code,latest,pre_close,price_change,open_interest,volume,amount,vol_oi_ratio,timestamp,oi_change,oi_change_pct,vol_change,signal,regime,signal_text
+SS2606.SHF,14990.0,14820.0,0.011470985155195734,164931.0,216853.0,16186339000.0,1.3148104358792465,2026-04-17 09:43:38,27672.0,0.2016042663869036,106643.0,long_buildup,多头增仓,实时价格上涨且持仓增加，偏向多头资金继续流入

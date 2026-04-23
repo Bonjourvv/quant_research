@@ -1,0 +1,2 @@
+product,product_name,factor,factor_label,raw_ic_5d,denoised_ic_5d,delta_ic_5d,raw_abs_ic_5d,denoised_abs_ic_5d,delta_abs_ic_5d,raw_excess_return,denoised_excess_return,delta_excess_return
+NI,沪镍,macd,MACD,-0.06585034893813768,-0.038994537203853465,0.026855811734284217,0.06585034893813768,0.038994537203853465,-0.026855811734284217,-1.290405383131791,0.30261574046247963,1.5930211235942706
