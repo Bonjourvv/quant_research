@@ -1,0 +1,497 @@
+"""生成综合研究总报告。"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import textwrap
+from datetime import datetime
+from pathlib import Path
+from typing import Iterable, List
+
+import pandas as pd
+
+from config.settings import PRODUCT_CONFIG, PROCESSED_DATA_DIR
+from src.reporting.pdf_report import FACTOR_MANUAL_ENTRIES
+
+
+def _escape_latex(text: str) -> str:
+    replacements = {
+        "\\": r"\textbackslash{}",
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+        "~": r"\textasciitilde{}",
+        "^": r"\textasciicircum{}",
+    }
+    for src, dst in replacements.items():
+        text = text.replace(src, dst)
+    return text
+
+
+def _read_markdown_lines(path: Path) -> List[str]:
+    if not path.exists():
+        return []
+
+    lines: List[str] = []
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            lines.append(line.lstrip("#").strip())
+        elif line.startswith("- "):
+            lines.append(line[2:].strip())
+        else:
+            lines.append(line)
+    return lines
+
+
+def _read_summary_kv(path: Path) -> dict[str, str]:
+    data: dict[str, str] = {}
+    for line in _read_markdown_lines(path):
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        data[key.strip()] = value.strip()
+    return data
+
+
+def _itemize(items: Iterable[str]) -> str:
+    body = "\n".join(rf"\item {_escape_latex(item)}" for item in items if item)
+    return "\\begin{itemize}\n" + body + "\n\\end{itemize}\n"
+
+
+def _product_codes(product: str) -> List[str]:
+    product = (product or "").upper()
+    if product == "ALL":
+        return ["NI", "SS", "CU"]
+    return [product]
+
+
+def _factor_sections(base_dir: Path) -> List[dict]:
+    return [
+        {
+            "title": "展期收益率因子",
+            "summary": base_dir / "latest_summary.md",
+            "images": [
+                base_dir / "roll_yield_seasonal.png",
+                base_dir / "roll_yield_rolling_ic.png",
+                base_dir / "roll_yield_group_returns.png",
+                base_dir / "roll_yield_backtest_nav.png",
+            ],
+        },
+        {
+            "title": "价格动量因子",
+            "summary": base_dir / "momentum" / "latest_summary.md",
+            "images": [
+                base_dir / "momentum" / "momentum_seasonal.png",
+                base_dir / "momentum" / "momentum_rolling_ic.png",
+                base_dir / "momentum" / "momentum_group_returns.png",
+                base_dir / "momentum" / "momentum_backtest_nav.png",
+            ],
+        },
+        {
+            "title": "MACD 因子",
+            "summary": base_dir / "macd" / "latest_summary.md",
+            "images": [
+                base_dir / "macd" / "macd_chart.png",
+                base_dir / "macd" / "macd_seasonal.png",
+            ],
+        },
+        {
+            "title": "虚实盘比因子",
+            "summary": base_dir / "virtual_ratio" / "latest_summary.md",
+            "images": [
+                base_dir / "virtual_ratio" / "virtual_real_ratio_seasonal.png",
+                base_dir / "virtual_ratio" / "virtual_real_ratio_rolling_ic.png",
+                base_dir / "virtual_ratio" / "virtual_real_ratio_group_returns.png",
+                base_dir / "virtual_ratio" / "virtual_real_ratio_backtest_nav.png",
+            ],
+        },
+        {
+            "title": "5分钟偏度因子",
+            "summary": base_dir / "intraday_skew" / "latest_summary.md",
+            "images": [
+                base_dir / "intraday_skew" / "intraday_skew_seasonal.png",
+                base_dir / "intraday_skew" / "intraday_skew_rolling_ic.png",
+                base_dir / "intraday_skew" / "intraday_skew_group_returns.png",
+                base_dir / "intraday_skew" / "intraday_skew_backtest_nav.png",
+            ],
+        },
+        {
+            "title": "展期+虚实盘组合因子",
+            "summary": base_dir / "roll_virtual_combo" / "latest_summary.md",
+            "images": [
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_seasonal.png",
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_rolling_ic.png",
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_group_returns.png",
+                base_dir / "roll_virtual_combo" / "roll_virtual_combo_backtest_nav.png",
+            ],
+        },
+        {
+            "title": "持仓-价格联动因子",
+            "summary": base_dir / "position_flow" / "latest_summary.md",
+            "images": [
+                base_dir / "position_flow" / "position_price_flow_seasonal.png",
+                base_dir / "position_flow" / "position_price_flow_rolling_ic.png",
+                base_dir / "position_flow" / "position_price_flow_group_returns.png",
+                base_dir / "position_flow" / "position_price_flow_backtest_nav.png",
+            ],
+        },
+    ]
+
+
+def _manual_section_tex() -> str:
+    chunks = [r"\section{因子手册与公式说明}"]
+    for entry in FACTOR_MANUAL_ENTRIES:
+        chunks.append(rf"\subsection{{{_escape_latex(entry['name'])}}}")
+        chunks.append(r"\paragraph{公式}")
+        chunks.append(r"\begin{itemize}")
+        for formula in entry.get("formula_tex", []):
+            chunks.append(rf"\item {formula}")
+        chunks.append(r"\end{itemize}")
+        chunks.append(r"\paragraph{变量定义}")
+        chunks.append(r"\begin{itemize}")
+        for definition in entry.get("definitions", []):
+            chunks.append(rf"\item {definition}")
+        chunks.append(r"\end{itemize}")
+        chunks.append(r"\paragraph{业务含义}")
+        chunks.append(r"\begin{itemize}")
+        for logic in entry.get("logic", []):
+            chunks.append(rf"\item {logic}")
+        chunks.append(r"\end{itemize}")
+    return "\n".join(chunks)
+
+
+def _methodology_tex() -> str:
+    return textwrap.dedent(
+        r"""
+        \section{研究方法与系统说明}
+        \subsection{数据来源与刷新机制}
+        \begin{itemize}
+        \item 历史日线主库使用 Tushare，负责全合约历史、主力切换、阈值标定、IC 与回测分析。
+        \item 实时快照使用同花顺，负责盘中价格、成交量、持仓量、虚实盘比和持仓联动信号。
+        \item 宏观情绪扩展使用 FRED，主要用于 VIX 系列策略研究。
+        \item 系统会优先读取本地缓存；若缓存落后于数据源最新可用交易日，则自动增量更新后再计算因子。
+        \end{itemize}
+
+        \subsection{历史分位数与阈值选择}
+        \begin{itemize}
+        \item 展期收益率因子默认采用全历史固定分位数阈值。
+        \item 当前默认配置为：10\% 分位作为做多阈值，90\% 分位作为做空阈值。
+        \item 这样做的目的是只在极端贴水或极端升水区域触发方向判断，减少中性区间噪声。
+        \item 系统也保留滚动分位数阈值接口，可按 252 日窗口动态更新阈值。
+        \end{itemize}
+
+        \subsection{交易信号与解释逻辑}
+        \begin{itemize}
+        \item 展期收益率：贴水更深通常偏多，升水更深通常偏空。
+        \item 动量：价格趋势延续时偏向顺势，趋势减弱时更多体现震荡或反转。
+        \item MACD：金叉、死叉、柱体放大和收敛用于识别趋势拐点与强弱变化。
+        \item 虚实盘比：高换手偏向短线博弈，低虚实盘比且增仓更像趋势资金沉淀。
+        \item 持仓联动：价格与持仓增减组合判断多头增仓、空头增仓、空头回补和多头离场。
+        \item 5分钟偏度：从日内收益分布的不对称性识别短期情绪尾部。
+        \item 组合因子：要求多个底层因子形成共振，避免单一信号误判。
+        \end{itemize}
+
+        \subsection{因子回测与评估逻辑}
+        \begin{itemize}
+        \item IC（Information Coefficient）衡量因子值与未来收益的相关性，当前默认展示 1/3/5/10/20 日周期。
+        \item 滚动 IC 使用 60 日窗口，用于观察因子稳定性与阶段性失效。
+        \item 分组收益把样本按因子值分成 5 组，比较不同分组未来收益表现。
+        \item 分位数组合回测使用上下分位阈值形成多空或多空仓位，并按固定持有期滚动计算净值。
+        \item 当前主展示持有期为 3 日，辅助展示 5/10/20 日周期。
+        \item 超额收益定义为：策略累计收益减去基准买入持有累计收益。
+        \item 因子准确率常用 |5日IC| 近似观察；但高 IC 不必然对应高策略收益，因此同时展示超额收益和净值曲线。
+        \end{itemize}
+
+        \subsection{策略扩展模块}
+        \begin{itemize}
+        \item VIX + RSI 恐慌反转策略把价格超卖和情绪抬升同时作为入场条件。
+        \item 开仓条件示例：RSI 进入超卖区域且 VIX 的 Z 分数显著高于近期均值。
+        \item 平仓条件示例：RSI 回升、VIX 回落至均值附近或持有天数达到上限。
+        \item 该模块目前既研究标普500，也研究沪镍主力连续，便于比较风险情绪在不同资产上的传播效果。
+        \end{itemize}
+        """
+    ).strip()
+
+
+def _quantile_table_tex(product_code: str) -> str:
+    product_name = PRODUCT_CONFIG[product_code]["name"]
+    file_path = PROCESSED_DATA_DIR / f"{product_code.lower()}_roll_yield_weighted_avg.csv"
+    if not file_path.exists():
+        return ""
+
+    df = pd.read_csv(file_path)
+    ry = df["roll_yield"].dropna()
+    quantiles = {
+        "5%": ry.quantile(0.05),
+        "10%": ry.quantile(0.10),
+        "25%": ry.quantile(0.25),
+        "50%": ry.quantile(0.50),
+        "75%": ry.quantile(0.75),
+        "90%": ry.quantile(0.90),
+        "95%": ry.quantile(0.95),
+    }
+    lines = [
+        rf"\subsubsection{{{product_name} 历史分位数}}",
+        r"\begin{center}",
+        r"\begin{tabular}{lrrrrrrr}",
+        r"\toprule",
+        r"样本数 & 均值 & 5\% & 10\% & 25\% & 50\% & 75\% & 90\% \\",
+        r"\midrule",
+        (
+            f"{len(ry)} & {ry.mean()*100:.2f}\\% & {quantiles['5%']*100:.2f}\\% & "
+            f"{quantiles['10%']*100:.2f}\\% & {quantiles['25%']*100:.2f}\\% & "
+            f"{quantiles['50%']*100:.2f}\\% & {quantiles['75%']*100:.2f}\\% & "
+            f"{quantiles['90%']*100:.2f}\\% \\\\"
+        ),
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{center}",
+    ]
+    return "\n".join(lines)
+
+
+def _product_snapshot_table_tex(product_code: str) -> str:
+    base_dir = PROCESSED_DATA_DIR / product_code.lower()
+    rows = []
+    for title, rel in [
+        ("展期收益率", "latest_summary.md"),
+        ("价格动量", "momentum/latest_summary.md"),
+        ("MACD", "macd/latest_summary.md"),
+        ("虚实盘比", "virtual_ratio/latest_summary.md"),
+        ("5分钟偏度", "intraday_skew/latest_summary.md"),
+        ("展期+虚实盘组合", "roll_virtual_combo/latest_summary.md"),
+        ("持仓-价格联动", "position_flow/latest_summary.md"),
+    ]:
+        summary = _read_summary_kv(base_dir / rel)
+        signal = summary.get("交易信号", summary.get("当前信号", summary.get("趋势标签", "--")))
+        interpretation = summary.get("信号解读", summary.get("当前趋势", "--"))
+        rows.append((title, signal, interpretation))
+
+    lines = [
+        r"\subsection{最新因子状态总览}",
+        r"\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.46\linewidth}}",
+        r"\toprule",
+        r"因子 & 当前信号 & 解释 \\",
+        r"\midrule",
+        r"\endfirsthead",
+        r"\toprule",
+        r"因子 & 当前信号 & 解释 \\",
+        r"\midrule",
+        r"\endhead",
+    ]
+    for title, signal, interpretation in rows:
+        lines.append(
+            f"{_escape_latex(title)} & {_escape_latex(str(signal))} & {_escape_latex(str(interpretation))} \\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{longtable}"])
+    return "\n".join(lines)
+
+
+def _factor_summary_tex(title: str, summary_path: Path) -> str:
+    lines = _read_markdown_lines(summary_path)
+    body = [rf"\subsection{{{_escape_latex(title)}}}"]
+    if not lines:
+        body.append("当前未找到对应摘要文件。")
+        return "\n".join(body)
+    body.append(_itemize(lines[1:] if lines and not lines[0].startswith("日期") else lines))
+    return "\n".join(body)
+
+
+def _image_tex(image_paths: List[Path], caption_base: str) -> str:
+    """
+    将多张图片紧凑排列：每行2张，自动流转。
+    """
+    valid_paths = [p for p in image_paths if p.exists()]
+    if not valid_paths:
+        return ""
+
+    chunks = [r"\begin{figure}[htbp]", r"\centering"]
+
+    for i, path in enumerate(valid_paths):
+        # 使用 minipage 包裹图片，宽度设为 48% 行宽
+        chunks.append(textwrap.dedent(rf"""
+            \begin{{minipage}}[b]{{0.48\linewidth}}
+                \centering
+                \includegraphics[width=\linewidth]{{{path.as_posix()}}}
+                \vspace{{0.2cm}}
+            \end{{minipage}}""").strip())
+
+        # 每放完两张图，或者最后一张图，手动换行（LaTeX 的 \\）
+        if (i + 1) % 2 == 0:
+            chunks.append(r"\\[0.3cm]")
+        elif i != len(valid_paths) - 1:
+            chunks.append(r"\hfill")  # 两图之间的间距
+
+    chunks.append(rf"\caption{{{_escape_latex(caption_base)}}}")
+    chunks.append(r"\end{figure}")
+
+    # 注意：不再使用 \clearpage，除非你希望这一组因子强行结束
+    return "\n".join(chunks)
+
+
+def _product_section_tex(product_code: str) -> str:
+    product_name = PRODUCT_CONFIG[product_code]["name"]
+    base_dir = PROCESSED_DATA_DIR / product_code.lower()
+    chunks = [rf"\section{{{product_name} 专题}}"]
+    chunks.append(_product_snapshot_table_tex(product_code))
+    chunks.append(_quantile_table_tex(product_code))
+
+    for section in _factor_sections(base_dir):
+        # 写入文字摘要
+        chunks.append(_factor_summary_tex(section["title"], section["summary"]))
+
+        # 【关键修改】：一次性传入该因子的所有图片列表
+        if section["images"]:
+            # 这样这 4 张图会以 2x2 的形式排列
+            chunks.append(_image_tex(section["images"], f"{product_name} - {section['title']}"))
+
+    return "\n\n".join(chunk for chunk in chunks if chunk)
+
+
+def _strategy_section_tex() -> str:
+    chunks = [r"\section{策略扩展研究}"]
+    strategies = [
+        ("VIX + 标普500 恐慌反转策略", PROCESSED_DATA_DIR / "vix_panic_reversion"),
+        ("VIX + 沪镍 恐慌反转策略", PROCESSED_DATA_DIR / "ni_vix_panic_reversion"),
+    ]
+    for title, base_dir in strategies:
+        chunks.append(_factor_summary_tex(title, base_dir / "latest_summary.md"))
+        # 将路径变成列表 [path]
+        chunks.append(_image_tex([base_dir / "backtest_chart.png"], title))
+    return "\n\n".join(chunk for chunk in chunks if chunk)
+
+
+def _comparison_section_tex() -> str:
+    base = PROCESSED_DATA_DIR / "comparison"
+    chunks = [r"\section{对比研究与附加实验}"]
+
+    report_md = base / "factor_product_comparison.md"
+    if report_md.exists():
+        chunks.append(r"\subsection{品种影响对比}")
+        chunks.append(_itemize(_read_markdown_lines(report_md)))
+        # 修改这里：加上中括号
+        chunks.append(_image_tex([base / "factor_abs_ic5d_comparison.png"], "不同品种下各因子准确率对比"))
+        chunks.append(_image_tex([base / "factor_excess_return_comparison.png"], "不同品种下各因子超额收益对比"))
+
+    denoise_md = base / "denoise" / "denoise_comparison_report.md"
+    if denoise_md.exists():
+        chunks.append(r"\subsection{MACD 降噪实验}")
+        chunks.append(_itemize(_read_markdown_lines(denoise_md)))
+        # 修改这里：加上中括号
+        chunks.append(_image_tex([base / "denoise" / "denoise_abs_ic5d_comparison.png"], "降噪前后准确率对比"))
+        chunks.append(_image_tex([base / "denoise" / "denoise_excess_return_comparison.png"], "降噪前后超额收益对比"))
+
+    vix_cmp = base / "vix_strategy_product_comparison.md"
+    if vix_cmp.exists():
+        chunks.append(r"\subsection{VIX 策略跨标的对比}")
+        chunks.append(_itemize(_read_markdown_lines(vix_cmp)))
+        # 修改这里：加上中括号
+        chunks.append(_image_tex([base / "vix_strategy_product_comparison.png"], "VIX 策略跨标的对比"))
+
+    vix_cmp_rev = base / "vix_strategy_product_comparison_reverse.md"
+    if vix_cmp_rev.exists():
+        chunks.append(r"\subsection{VIX 反向策略对比}")
+        chunks.append(_itemize(_read_markdown_lines(vix_cmp_rev)))
+        # 修改这里：加上中括号
+        chunks.append(_image_tex([base / "vix_strategy_product_comparison_reverse.png"], "VIX 反向策略对比"))
+
+    return "\n\n".join(chunk for chunk in chunks if chunk)
+
+
+def export_comprehensive_report(product: str = "ALL", output_dir: Path | None = None) -> Path:
+    """导出综合 LaTeX 总报告。"""
+    product = product.upper()
+    report_dir = output_dir or PROCESSED_DATA_DIR
+    build_dir = report_dir / "latex_comprehensive_build"
+    build_dir.mkdir(parents=True, exist_ok=True)
+    tex_path = build_dir / "comprehensive_report.tex"
+
+    if product == "ALL":
+        products = _product_codes("ALL")
+        title = "期货研究综合总报告"
+        pdf_target = report_dir / "summary" / "comprehensive_report.pdf"
+    else:
+        products = _product_codes(product)
+        title = f"{PRODUCT_CONFIG[product]['name']} 综合研究报告"
+        pdf_target = report_dir / product.lower() / f"{product.lower()}_comprehensive_report.pdf"
+    pdf_target.parent.mkdir(parents=True, exist_ok=True)
+
+    product_sections = "\n\n".join(_product_section_tex(code) for code in products)
+    content = textwrap.dedent(
+        rf"""
+        \documentclass[11pt,a4paper]{{ctexart}}
+        \usepackage[margin=2cm]{{geometry}}
+        \usepackage{{amsmath,amssymb,booktabs,longtable,tabularx,array,graphicx,float,hyperref}}
+        \usepackage{{fancyhdr}}
+        \usepackage{{titlesec}}
+        \usepackage{{setspace}}
+        \setstretch{{1.15}}
+        \pagestyle{{fancy}}
+        \fancyhf{{}}
+        \fancyfoot[C]{{\thepage}}
+        \titleformat{{\section}}{{\Large\bfseries}}{{\thesection}}{{0.8em}}{{}}
+        \titleformat{{\subsection}}{{\large\bfseries}}{{\thesubsection}}{{0.6em}}{{}}
+        \title{{{_escape_latex(title)}}}
+        \author{{nickel\_research}}
+        \date{{{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}}
+        \begin{{document}}
+        \maketitle
+        \tableofcontents
+        \clearpage
+        \section{{报告说明}}
+        \begin{{itemize}}
+        \item 本报告把当前系统中的因子手册、方法论、历史分位数、阈值选择、交易信号解释、因子回测逻辑、超额收益定义、各品种结果图表和策略扩展统一合并到一个文件中。
+        \item 因子与策略图表均来自系统最新一次从原始数据重新计算后的导出结果，而不是旧图的拼接。
+        \item 当前覆盖品种包括：{_escape_latex("、".join(PRODUCT_CONFIG[code]["name"] for code in products))}。
+        \end{{itemize}}
+        {_methodology_tex()}
+        {_manual_section_tex()}
+        {product_sections}
+        {_strategy_section_tex()}
+        {_comparison_section_tex()}
+        \end{{document}}
+        """
+    ).strip() + "\n"
+    tex_path.write_text(content, encoding="utf-8")
+
+    # --- 修改后的代码 ---
+    # 1. 显式指定 Mac 下的路径
+    xelatex = shutil.which("xelatex") or "/Library/TeX/texbin/xelatex"
+
+    if not Path(xelatex).exists():
+        print(f"❌ 错误：在 {xelatex} 未找到编译器，请检查 MacTeX 是否安装完整。")
+        return Path()
+
+    print(f"开始编译 PDF (使用: {xelatex})...")
+
+    try:
+        for i in range(2):
+            print(f"正在进行第 {i + 1} 次排版渲染...")
+            result = subprocess.run(
+                [xelatex, "-interaction=nonstopmode", "-halt-on-error", tex_path.name],
+                cwd=build_dir,
+                check=True,
+                capture_output=True,  # 捕获错误信息
+                text=True
+            )
+
+        # 复制文件
+        shutil.copy2(build_dir / "comprehensive_report.pdf", pdf_target)
+        print(f"✅ 成功！报告已生成至: {pdf_target}")
+        print(f"完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+    except subprocess.CalledProcessError as e:
+        print("❌ LaTeX 编译崩溃了！具体的错误日志如下：")
+        # 打印最后15行 LaTeX 报错信息，方便精准定位
+        print("\n".join(e.stdout.splitlines()[-15:]))
+
+    shutil.copy2(build_dir / "comprehensive_report.pdf", pdf_target)
+    return pdf_target
