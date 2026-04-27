@@ -1,0 +1,176 @@
+\documentclass[11pt,a4paper]{ctexart}
+        \usepackage[margin=2cm]{geometry}
+        \usepackage{amsmath,amssymb}
+        \usepackage{booktabs}
+        \usepackage{enumitem}
+        \usepackage{hyperref}
+        \usepackage{fancyhdr}
+        \usepackage{titlesec}
+        \pagestyle{fancy}
+        \fancyhf{}
+        \fancyfoot[C]{\thepage}
+        \setlist[itemize]{leftmargin=1.8em,itemsep=0.35em,topsep=0.35em}
+        \titleformat{\section}{\Large\bfseries}{}{0em}{}
+        \title{期货因子手册}
+        \author{nickel\_research}
+        \date{\today}
+        \begin{document}
+        \maketitle
+        \tableofcontents
+        \newpage
+        \section*{展期收益率因子}
+\textbf{公式}
+\begin{itemize}
+\item $R_t=\dfrac{\ln(P_{near})-\ln(P_{far})}{T_{far}-T_{near}}\times 365$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $P_{near}, P_{far}$: 近月和远月合约价格。
+\item $T_{far}, T_{near}$: 两个合约到期日的间隔天数，用于期限归一化。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $R_t$ 较高时，通常对应远月贴水、现货偏紧，价格更容易上行。
+\item $R_t$ 较低时，通常对应远月升水、供应宽松，价格更容易承压。
+\end{itemize}
+
+\section*{价格动量因子}
+\textbf{公式}
+\begin{itemize}
+\item $Momentum_t=\dfrac{Close_t}{Close_{t-N}}-1$
+\item $TrendStrength_t=\dfrac{MA_{short}}{MA_{long}}-1$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $Close_t, Close_{t-N}$: 当前与 $N$ 日前收盘价。
+\item $MA_{short}, MA_{long}$: 短周期和长周期均线。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $Momentum_t>0$ 且 $TrendStrength_t>0$ 时，通常表示上涨趋势延续。
+\item $Momentum_t<0$ 且 $TrendStrength_t<0$ 时，通常表示下跌趋势延续。
+\end{itemize}
+
+\section*{MACD 因子}
+\textbf{公式}
+\begin{itemize}
+\item $DIF=EMA_{12}(Close)-EMA_{26}(Close)$
+\item $DEA=EMA_{9}(DIF)$
+\item $MACD\ Histogram=2\times(DIF-DEA)$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $EMA_{12}, EMA_{26}$: 快线与慢线指数移动平均。
+\item $DIF, DEA$: 快慢线差值及其平滑线。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $DIF$ 上穿 $DEA$ 常被视为金叉，趋势偏多。
+\item $DIF$ 下穿 $DEA$ 常被视为死叉，趋势偏空。
+\item $MACD\ Histogram$ 扩大表示动能增强，收敛表示动能减弱。
+\end{itemize}
+
+\section*{虚实盘比因子}
+\textbf{公式}
+\begin{itemize}
+\item $VRR=\dfrac{Volume}{OpenInterest}$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $Volume, OpenInterest$: 成交量与持仓量。
+\item $VRR$ 越高，表示单位持仓对应的换手越频繁。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $VRR$ 偏高时，通常表示短线资金活跃、博弈更强。
+\item $VRR$ 较低且增仓时，通常表示筹码沉淀、趋势资金更稳定。
+\end{itemize}
+
+\section*{持仓-价格联动因子}
+\textbf{公式}
+\begin{itemize}
+\item $PriceChange_t=\dfrac{Close_t}{Close_{t-1}}-1$
+\item $OIChange_t=\dfrac{OI_t-OI_{t-1}}{OI_{t-1}}$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $Close_t, Close_{t-1}$: 当日与前一日收盘价。
+\item $OI_t, OI_{t-1}$: 当日与前一日持仓量。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $PriceChange_t>0$ 且 $OIChange_t>0$ 时，通常表示多头增仓。
+\item $PriceChange_t<0$ 且 $OIChange_t>0$ 时，通常表示空头增仓。
+\item $PriceChange_t>0$ 且 $OIChange_t<0$ 时，通常表示空头回补。
+\item $PriceChange_t<0$ 且 $OIChange_t<0$ 时，通常表示多头离场。
+\end{itemize}
+
+\section*{5分钟偏度因子}
+\textbf{公式}
+\begin{itemize}
+\item $skew_t=E\left[\left(\dfrac{ret_i-\mu_{5min}}{\sigma_{5min}}\right)^3\right]$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $ret_i$: 回看期内商品期货的 5 分钟收益率序列。
+\item $\mu_{5min}$: 回看期内所有 5 分钟收益率的均值。
+\item $\sigma_{5min}$: 回看期内所有 5 分钟收益率的标准差。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $skew_t$ 显著偏高时，通常表示价格上行尾部更长，短期更容易在情绪回落后承压。
+\item $skew_t$ 显著偏低时，通常表示价格下行尾部更长，恐慌释放后更容易出现反弹。
+\item 把 $ret_i$ 拆成正收益与负收益子样本，还可以得到上行偏度和下行偏度。
+\end{itemize}
+
+\section*{RSI 指标}
+\textbf{公式}
+\begin{itemize}
+\item $RSI=100-\dfrac{100}{1+RS}$
+\item $RS=\dfrac{AvgGain_n}{AvgLoss_n}$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $AvgGain_n, AvgLoss_n$: 过去 $n$ 个周期平均上涨与下跌幅度。
+\item $RSI$ 数值通常位于 $0$ 到 $100$ 之间。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $RSI$ 越低，通常表示价格越接近短期超卖。
+\item $RSI$ 越高，通常表示价格越接近短期超买。
+\end{itemize}
+
+\section*{VIX 情绪因子}
+\textbf{公式}
+\begin{itemize}
+\item $VIX_z=\dfrac{VIX-\mu_n(VIX)}{\sigma_n(VIX)}$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $\mu_n(VIX)$: $VIX$ 在过去 $n$ 日的均值。
+\item $\sigma_n(VIX)$: $VIX$ 在过去 $n$ 日的标准差。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item $VIX_z$ 越高，表示当前恐慌显著高于近期常态。
+\item $VIX_z$ 更适合作为情绪过滤器，而不是单独方向信号。
+\end{itemize}
+
+\section*{VIX + RSI 恐慌反转策略}
+\textbf{公式}
+\begin{itemize}
+\item $Entry:\ RSI \leq 30,\ \ VIX_z \geq 1.0$
+\item $Exit:\ RSI \geq 55\ \mathrm{or}\ VIX \leq \mu_n(VIX)\ \mathrm{or}\ HoldingDays \geq 10$
+\item $StrategyReturn_t=Position_{t-1}\times Return_t$
+\end{itemize}
+\textbf{变量定义}
+\begin{itemize}
+\item $Entry$: $RSI$ 跌入超卖且 $VIX_z$ 显著升高时开仓。
+\item $Exit$: 反弹兑现、恐慌缓解或持仓超过上限时平仓。
+\end{itemize}
+\textbf{业务含义}
+\begin{itemize}
+\item 只有 $RSI$ 超卖和 $VIX_z$ 抬升同时出现，才认为反转信号更有效。
+\item $StrategyReturn_t$ 本质上是用情绪过滤后的价格反转收益。
+\end{itemize}
+        \end{document}
