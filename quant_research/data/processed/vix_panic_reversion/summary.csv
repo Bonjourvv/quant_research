@@ -1,0 +1,13 @@
+,value
+strategy_total_return,0.17076507456994872
+buy_hold_total_return,2.1610516631966323
+strategy_annualized_return,0.02054159169215497
+buy_hold_annualized_return,0.14191122716558824
+strategy_annualized_vol,0.09387258899496397
+buy_hold_annualized_vol,0.1809407219100103
+strategy_sharpe,0.21661572567340304
+buy_hold_sharpe,0.7336011443873591
+strategy_max_drawdown,-0.2214125093410001
+buy_hold_max_drawdown,-0.3392495902426059
+trades,17.0
+exposure,0.048115477145148355
