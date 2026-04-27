@@ -1,0 +1,2 @@
+contract_code,latest,pre_close,price_change,open_interest,volume,amount,vol_oi_ratio,timestamp,oi_change,oi_change_pct,vol_change,signal,regime,signal_text
+CU2606.SHF,103180.0,102780.0,0.0038918077446974397,217285.0,45233.0,23317492000.0,0.20817359688887865,2026-04-24 00:20:24,287.0,0.0013225928349570042,-121965.0,neutral,震荡观望,价格与持仓变化均不显著，资金方向暂不明确
