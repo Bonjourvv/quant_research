@@ -295,6 +295,126 @@ def _product_snapshot_table_tex(product_code: str) -> str:
     return "\n".join(lines)
 
 
+def _score_signal(signal: str) -> int:
+    text = str(signal)
+    bullish_tokens = ["bullish", "uptrend", "strong_uptrend", "long_buildup", "short_covering", "+1", "多头增仓", "空头回补", "上行", "强上行"]
+    bearish_tokens = ["bearish", "downtrend", "strong_downtrend", "short_buildup", "long_unwinding", "-1", "空头增仓", "多头离场", "下行", "强下行"]
+    if any(token in text for token in bullish_tokens):
+        return 1
+    if any(token in text for token in bearish_tokens):
+        return -1
+    return 0
+
+
+def _leader_summary_table_tex() -> str:
+    summary_csv = PROCESSED_DATA_DIR / "summary" / "latest_factor_summary.csv"
+    comparison_csv = PROCESSED_DATA_DIR / "comparison" / "factor_product_comparison.csv"
+    if not summary_csv.exists():
+        return ""
+
+    df = pd.read_csv(summary_csv)
+    if df.empty:
+        return ""
+
+    compare_df = pd.read_csv(comparison_csv) if comparison_csv.exists() else pd.DataFrame()
+    best_factor_map: dict[str, str] = {}
+    factor_label_map = {
+        "roll_yield": "展期收益率",
+        "momentum": "价格动量",
+        "virtual_real_ratio": "虚实盘比",
+        "intraday_skew": "5分钟偏度",
+        "roll_virtual_combo": "展期+虚实盘组合",
+        "macd": "MACD",
+        "position_price_flow": "持仓-价格联动",
+    }
+    if not compare_df.empty:
+        tmp = compare_df.sort_values(["product", "abs_ic_5d"], ascending=[True, False]).drop_duplicates("product")
+        best_factor_map = {
+            str(row["product"]).upper(): f"{factor_label_map.get(str(row['factor']), str(row['factor']))} ({row['abs_ic_5d']*100:.1f}%)"
+            for _, row in tmp.iterrows()
+        }
+
+    table_rows = []
+    positive_count = 0
+    negative_count = 0
+    for _, row in df.iterrows():
+        product_code = str(row["代码"]).upper()
+        base_dir = PROCESSED_DATA_DIR / product_code.lower()
+
+        combo_summary = _read_summary_kv(base_dir / "roll_virtual_combo" / "latest_summary.md")
+        intraday_summary = _read_summary_kv(base_dir / "intraday_skew" / "latest_summary.md")
+
+        scores = [
+            _score_signal(str(row.get("动量趋势", ""))),
+            _score_signal(str(row.get("MACD趋势", ""))),
+            _score_signal(str(row.get("持仓联动", ""))),
+            _score_signal(str(combo_summary.get("交易信号", ""))),
+            _score_signal(str(intraday_summary.get("交易信号", ""))),
+        ]
+        total_score = sum(scores)
+        if total_score >= 2:
+            verdict = "偏多"
+            action = "等待回调后偏多跟踪"
+            positive_count += 1
+        elif total_score <= -2:
+            verdict = "偏空"
+            action = "反弹后偏空观察"
+            negative_count += 1
+        else:
+            verdict = "中性"
+            action = "以观察和择时为主"
+
+        core_driver = (
+            f"展期 {row.get('展期收益率', '--')} / "
+            f"动量 {row.get('动量趋势', '--')} / "
+            f"MACD {row.get('MACD趋势', '--')}"
+        )
+        risk_note = combo_summary.get("信号解读", intraday_summary.get("信号解读", "--"))
+        best_factor = best_factor_map.get(product_code, "--")
+
+        table_rows.append(
+            (
+                _escape_latex(str(row["品种"])),
+                _escape_latex(str(row["历史最新日期"])),
+                _escape_latex(verdict),
+                _escape_latex(core_driver),
+                _escape_latex(best_factor),
+                _escape_latex(action),
+                _escape_latex(risk_note),
+            )
+        )
+
+    neutral_count = len(df) - positive_count - negative_count
+    header = textwrap.dedent(
+        rf"""
+        \section{{管理层汇总页}}
+        \subsection{{一页结论}}
+        \begin{{center}}
+        \begin{{tabular}}{{p{{0.18\linewidth}}p{{0.12\linewidth}}p{{0.10\linewidth}}p{{0.18\linewidth}}p{{0.14\linewidth}}p{{0.12\linewidth}}p{{0.14\linewidth}}}}
+        \toprule
+        品种 & 日期 & 结论 & 当前驱动 & 相对更强因子 & 建议动作 & 风险提示 \\
+        \midrule
+        """
+    ).strip()
+
+    body = "\n".join(" & ".join(row) + r" \\" for row in table_rows)
+    footer = textwrap.dedent(
+        rf"""
+        \bottomrule
+        \end{{tabular}}
+        \end{{center}}
+
+        \subsection{{一句话概览}}
+        \begin{{itemize}}
+        \item 当前跟踪品种共 {len(df)} 个，其中偏多 {positive_count} 个、偏空 {negative_count} 个、中性 {neutral_count} 个。
+        \item 结论优先综合展期结构、价格趋势、MACD、持仓联动和组合因子，不等同于单一交易指令。
+        \item 建议将“相对更强因子”视为后续重点跟踪方向，将“风险提示”视为当前最需要向领导解释的变化来源。
+        \end{{itemize}}
+        """
+    ).strip()
+    return "\n".join([header, body, footer])
+
+
 def _factor_summary_tex(title: str, summary_path: Path) -> str:
     lines = _read_markdown_lines(summary_path)
     body = [rf"\subsection{{{_escape_latex(title)}}}"]
@@ -395,6 +515,7 @@ def export_comprehensive_report(product: str = "ALL", output_dir: Path | None = 
     pdf_target.parent.mkdir(parents=True, exist_ok=True)
 
     product_sections = "\n\n".join(_product_section_tex(code) for code in products)
+    leader_summary = _leader_summary_table_tex()
     content = textwrap.dedent(
         rf"""
         \documentclass[11pt,a4paper]{{ctexart}}
@@ -422,6 +543,7 @@ def export_comprehensive_report(product: str = "ALL", output_dir: Path | None = 
         \item 因子与策略图表均来自系统最新一次从原始数据重新计算后的导出结果，而不是旧图的拼接。
         \item 当前覆盖品种包括：{_escape_latex("、".join(PRODUCT_CONFIG[code]["name"] for code in products))}。
         \end{{itemize}}
+        {leader_summary}
         {_methodology_tex()}
         {_manual_section_tex()}
         {product_sections}

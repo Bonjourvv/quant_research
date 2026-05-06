@@ -10,9 +10,9 @@
         \fancyfoot[C]{\thepage}
         \titleformat{\section}{\Large\bfseries}{\thesection}{0.8em}{}
         \titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.6em}{}
-        \title{沪镍 综合研究报告}
+        \title{期货研究综合总报告}
         \author{nickel\_research}
-        \date{2026-04-23 08:50:52}
+        \date{2026-05-06 09:55:42}
         \begin{document}
         \maketitle
         \tableofcontents
@@ -21,8 +21,28 @@
         \begin{itemize}
         \item 本报告把当前系统中的因子手册、方法论、历史分位数、阈值选择、交易信号解释、因子回测逻辑、超额收益定义、各品种结果图表和策略扩展统一合并到一个文件中。
         \item 因子与策略图表均来自系统最新一次从原始数据重新计算后的导出结果，而不是旧图的拼接。
-        \item 当前覆盖品种包括：沪镍。
+        \item 当前覆盖品种包括：沪镍、不锈钢、沪铜。
         \end{itemize}
+        \section{管理层汇总页}
+\subsection{一页结论}
+\begin{center}
+\begin{tabular}{p{0.18\linewidth}p{0.12\linewidth}p{0.10\linewidth}p{0.18\linewidth}p{0.14\linewidth}p{0.12\linewidth}p{0.14\linewidth}}
+\toprule
+品种 & 日期 & 结论 & 当前驱动 & 相对更强因子 & 建议动作 & 风险提示 \\
+\midrule
+沪镍 & 2026-04-16 & 偏多 & 展期 +2.81\% / 动量 sideways / MACD strong\_uptrend & MACD (6.6\%) & 等待回调后偏多跟踪 & 展期与虚实盘信号未形成共振，维持中性判断 \\
+不锈钢 & 2026-04-16 & 偏多 & 展期 -0.38\% / 动量 uptrend / MACD strong\_uptrend & MACD (5.1\%) & 等待回调后偏多跟踪 & 展期与虚实盘信号未形成共振，维持中性判断 \\
+沪铜 & 2026-04-16 & 中性 & 展期 -0.27\% / 动量 sideways / MACD uptrend & 展期收益率 (5.8\%) & 以观察和择时为主 & 贴水与低虚实盘比共振，偏多信号增强 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{一句话概览}
+\begin{itemize}
+\item 当前跟踪品种共 3 个，其中偏多 2 个、偏空 0 个、中性 1 个。
+\item 结论优先综合展期结构、价格趋势、MACD、持仓联动和组合因子，不等同于单一交易指令。
+\item 建议将“相对更强因子”视为后续重点跟踪方向，将“风险提示”视为当前最需要向领导解释的变化来源。
+\end{itemize}
         \section{研究方法与系统说明}
 \subsection{数据来源与刷新机制}
 \begin{itemize}
@@ -231,7 +251,7 @@
 \endhead
 展期收益率 & -- & -- \\
 价格动量 & +0 & -- \\
-MACD & +0 & uptrend \\
+MACD & +0 & strong\_uptrend \\
 虚实盘比 & neutral & 虚实盘比平稳，短线与持仓结构均衡 \\
 5分钟偏度 & neutral & 偏度处于中性区域，情绪不对称性不明显 \\
 展期+虚实盘组合 & neutral & 展期与虚实盘信号未形成共振，维持中性判断 \\
@@ -290,10 +310,10 @@ MACD & +0 & uptrend \\
 
 \subsection{价格动量因子}
 \begin{itemize}
-\item 日期: 2026-04-16
-\item 最新收盘价: 142270.00
-\item 20日动量: +5.23\%
-\item 趋势强度: -1.34\%
+\item 日期: 2026-05-06
+\item 最新收盘价: 152830.00
+\item 20日动量: +16.18\%
+\item 趋势强度: -0.09\%
 \item 趋势标签: sideways
 \item 交易信号: +0
 \end{itemize}
@@ -329,10 +349,10 @@ MACD & +0 & uptrend \\
 
 \subsection{MACD 因子}
 \begin{itemize}
-\item 日期: 2026-04-16
-\item 当前趋势: uptrend
-\item DIF / DEA: 772.04 / -187.19
-\item MACD柱: 1918.48
+\item 日期: 2026-05-06
+\item 当前趋势: strong\_uptrend
+\item DIF / DEA: 1957.44 / 241.73
+\item MACD柱: 3431.42
 \item 当前信号: +0
 \item 当前持仓: +1
 \end{itemize}
@@ -395,12 +415,12 @@ MACD & +0 & uptrend \\
 
 \subsection{5分钟偏度因子}
 \begin{itemize}
-\item 日期: 2026-04-16
+\item 日期: 2026-05-06
 \item 主力合约: NI2606.SHF
-\item 收盘价: 142270.00
-\item 偏度因子: -0.2133
-\item 上行偏度: +1.2822
-\item 下行偏度: -2.1280
+\item 收盘价: 152800.00
+\item 偏度因子: +0.4190
+\item 上行偏度: +1.7883
+\item 下行偏度: -1.6771
 \item 交易信号: neutral
 \item 信号解读: 偏度处于中性区域，情绪不对称性不明显
 \end{itemize}
@@ -514,6 +534,606 @@ MACD & +0 & uptrend \\
 \centering
 \includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ni/position_flow/position_price_flow_backtest_nav.png}
 \caption{沪镍 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\section{不锈钢 专题}
+
+\subsection{最新因子状态总览}
+\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.46\linewidth}}
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endfirsthead
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endhead
+展期收益率 & -- & -- \\
+价格动量 & +1 & -- \\
+MACD & +0 & strong\_uptrend \\
+虚实盘比 & neutral & 虚实盘比平稳，短线与持仓结构均衡 \\
+5分钟偏度 & neutral & 偏度处于中性区域，情绪不对称性不明显 \\
+展期+虚实盘组合 & neutral & 展期与虚实盘信号未形成共振，维持中性判断 \\
+持仓-价格联动 & neutral & 价格与持仓变化均不显著，资金方向暂不明确 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{不锈钢 历史分位数}
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+样本数 & 均值 & 5\% & 10\% & 25\% & 50\% & 75\% & 90\% \\
+\midrule
+1561 & -4.65\% & -27.39\% & -19.82\% & -9.59\% & -2.08\% & 2.65\% & 6.35\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{展期收益率因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 最新展期收益率: -0.38\%
+\item 样本数量: 1587
+\item 历史均值: -4.65\%
+\item 历史标准差: 10.80\%
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_seasonal.png}
+\caption{不锈钢 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_rolling_ic.png}
+\caption{不锈钢 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_group_returns.png}
+\caption{不锈钢 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_backtest_nav.png}
+\caption{不锈钢 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\subsection{价格动量因子}
+\begin{itemize}
+\item 日期: 2026-05-06
+\item 最新收盘价: 15670.00
+\item 20日动量: +13.10\%
+\item 趋势强度: +2.29\%
+\item 趋势标签: uptrend
+\item 交易信号: +1
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_seasonal.png}
+\caption{不锈钢 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_rolling_ic.png}
+\caption{不锈钢 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_group_returns.png}
+\caption{不锈钢 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_backtest_nav.png}
+\caption{不锈钢 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\subsection{MACD 因子}
+\begin{itemize}
+\item 日期: 2026-05-06
+\item 当前趋势: strong\_uptrend
+\item DIF / DEA: 226.85 / 113.72
+\item MACD柱: 226.26
+\item 当前信号: +0
+\item 当前持仓: +1
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/macd/macd_chart.png}
+\caption{不锈钢 - MACD 因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/macd/macd_seasonal.png}
+\caption{不锈钢 - MACD 因子}
+\end{figure}
+\clearpage
+
+\subsection{虚实盘比因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14820.00
+\item 虚实盘比: 0.803
+\item 持仓变化: +7748
+\item 成交变化: -58594
+\item 交易信号: neutral
+\item 信号解读: 虚实盘比平稳，短线与持仓结构均衡
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_real_ratio_seasonal.png}
+\caption{不锈钢 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_real_ratio_rolling_ic.png}
+\caption{不锈钢 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_real_ratio_group_returns.png}
+\caption{不锈钢 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_real_ratio_backtest_nav.png}
+\caption{不锈钢 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\subsection{5分钟偏度因子}
+\begin{itemize}
+\item 日期: 2026-05-06
+\item 主力合约: SS2606.SHF
+\item 收盘价: 15660.00
+\item 偏度因子: +0.4618
+\item 上行偏度: +1.7417
+\item 下行偏度: -2.3368
+\item 交易信号: neutral
+\item 信号解读: 偏度处于中性区域，情绪不对称性不明显
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_skew_seasonal.png}
+\caption{不锈钢 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_skew_rolling_ic.png}
+\caption{不锈钢 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_skew_group_returns.png}
+\caption{不锈钢 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_skew_backtest_nav.png}
+\caption{不锈钢 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\subsection{展期+虚实盘组合因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14820.00
+\item 展期收益率: -0.38\%
+\item 虚实盘比: 0.803
+\item 组合得分: +0.88
+\item 交易信号: neutral
+\item 信号解读: 展期与虚实盘信号未形成共振，维持中性判断
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_seasonal.png}
+\caption{不锈钢 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_rolling_ic.png}
+\caption{不锈钢 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_group_returns.png}
+\caption{不锈钢 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_backtest_nav.png}
+\caption{不锈钢 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\subsection{持仓-价格联动因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14820.00
+\item 当日涨跌: +0.14\%
+\item 持仓变化: +7748
+\item 持仓变化率: +5.98\%
+\item 联动结构: 震荡观望
+\item 交易信号: neutral
+\item 信号解读: 价格与持仓变化均不显著，资金方向暂不明确
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_price_flow_seasonal.png}
+\caption{不锈钢 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_price_flow_rolling_ic.png}
+\caption{不锈钢 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_price_flow_group_returns.png}
+\caption{不锈钢 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_price_flow_backtest_nav.png}
+\caption{不锈钢 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\section{沪铜 专题}
+
+\subsection{最新因子状态总览}
+\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.46\linewidth}}
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endfirsthead
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endhead
+展期收益率 & -- & -- \\
+价格动量 & +0 & -- \\
+MACD & +0 & uptrend \\
+虚实盘比 & bullish & 低虚实盘比且增仓，偏向主力沉淀建仓 \\
+5分钟偏度 & bearish & 偏度显著偏高，更像冲高后的拥挤状态，偏向均值回归做空 \\
+展期+虚实盘组合 & bullish & 贴水与低虚实盘比共振，偏多信号增强 \\
+持仓-价格联动 & neutral & 价格与持仓变化均不显著，资金方向暂不明确 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{沪铜 历史分位数}
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+样本数 & 均值 & 5\% & 10\% & 25\% & 50\% & 75\% & 90\% \\
+\midrule
+1522 & -0.74\% & -4.85\% & -3.65\% & -2.06\% & -0.20\% & 1.04\% & 2.14\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{展期收益率因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 最新展期收益率: -0.27\%
+\item 样本数量: 1522
+\item 历史均值: -0.74\%
+\item 历史标准差: 2.85\%
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_seasonal.png}
+\caption{沪铜 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_rolling_ic.png}
+\caption{沪铜 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_group_returns.png}
+\caption{沪铜 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_backtest_nav.png}
+\caption{沪铜 - 展期收益率因子}
+\end{figure}
+\clearpage
+
+\subsection{价格动量因子}
+\begin{itemize}
+\item 日期: 2026-05-06
+\item 最新收盘价: 102400.00
+\item 20日动量: +8.45\%
+\item 趋势强度: -0.67\%
+\item 趋势标签: sideways
+\item 交易信号: +0
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_seasonal.png}
+\caption{沪铜 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_rolling_ic.png}
+\caption{沪铜 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_group_returns.png}
+\caption{沪铜 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_backtest_nav.png}
+\caption{沪铜 - 价格动量因子}
+\end{figure}
+\clearpage
+
+\subsection{MACD 因子}
+\begin{itemize}
+\item 日期: 2026-05-06
+\item 当前趋势: uptrend
+\item DIF / DEA: 792.10 / -106.93
+\item MACD柱: 1798.06
+\item 当前信号: +0
+\item 当前持仓: +1
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/macd/macd_chart.png}
+\caption{沪铜 - MACD 因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/macd/macd_seasonal.png}
+\caption{沪铜 - MACD 因子}
+\end{figure}
+\clearpage
+
+\subsection{虚实盘比因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102720.00
+\item 虚实盘比: 0.379
+\item 持仓变化: +5205
+\item 成交变化: -25658
+\item 交易信号: bullish
+\item 信号解读: 低虚实盘比且增仓，偏向主力沉淀建仓
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_real_ratio_seasonal.png}
+\caption{沪铜 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_real_ratio_rolling_ic.png}
+\caption{沪铜 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_real_ratio_group_returns.png}
+\caption{沪铜 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_real_ratio_backtest_nav.png}
+\caption{沪铜 - 虚实盘比因子}
+\end{figure}
+\clearpage
+
+\subsection{5分钟偏度因子}
+\begin{itemize}
+\item 日期: 2026-05-06
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102240.00
+\item 偏度因子: +1.5028
+\item 上行偏度: +2.7283
+\item 下行偏度: -1.3230
+\item 交易信号: bearish
+\item 信号解读: 偏度显著偏高，更像冲高后的拥挤状态，偏向均值回归做空
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_skew_seasonal.png}
+\caption{沪铜 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_skew_rolling_ic.png}
+\caption{沪铜 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_skew_group_returns.png}
+\caption{沪铜 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_skew_backtest_nav.png}
+\caption{沪铜 - 5分钟偏度因子}
+\end{figure}
+\clearpage
+
+\subsection{展期+虚实盘组合因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102720.00
+\item 展期收益率: -0.27\%
+\item 虚实盘比: 0.379
+\item 组合得分: +1.12
+\item 交易信号: bullish
+\item 信号解读: 贴水与低虚实盘比共振，偏多信号增强
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_seasonal.png}
+\caption{沪铜 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_rolling_ic.png}
+\caption{沪铜 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_group_returns.png}
+\caption{沪铜 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_backtest_nav.png}
+\caption{沪铜 - 展期+虚实盘组合因子}
+\end{figure}
+\clearpage
+
+\subsection{持仓-价格联动因子}
+\begin{itemize}
+\item 日期: 2026-04-16
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102720.00
+\item 当日涨跌: +0.55\%
+\item 持仓变化: +5205
+\item 持仓变化率: +3.09\%
+\item 联动结构: 震荡观望
+\item 交易信号: neutral
+\item 信号解读: 价格与持仓变化均不显著，资金方向暂不明确
+\end{itemize}
+
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_price_flow_seasonal.png}
+\caption{沪铜 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_price_flow_rolling_ic.png}
+\caption{沪铜 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_price_flow_group_returns.png}
+\caption{沪铜 - 持仓-价格联动因子}
+\end{figure}
+\clearpage
+
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth,height=0.82\textheight,keepaspectratio]{/Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_price_flow_backtest_nav.png}
+\caption{沪铜 - 持仓-价格联动因子}
 \end{figure}
 \clearpage
         \section{策略扩展研究}

@@ -46,6 +46,7 @@ from src.reporting import (
     export_factor_manual_latex,
     export_factor_manual_pdf,
     export_pdf_report,
+    export_signal_table_image,
 )
 
 setup_chinese_font()
@@ -102,6 +103,59 @@ def _save_latest_summary(output_dir: Path, title: str, lines: List[str]) -> None
 
 def _format_date(value) -> str:
     return pd.to_datetime(value).strftime("%Y-%m-%d")
+
+
+def _augment_contracts_with_ths_latest(config: ResearchConfig, contracts_data: pd.DataFrame) -> pd.DataFrame:
+    """
+    用同花顺实时主力快照给历史主库补一条“当日临时记录”。
+
+    这条补丁只服务于需要最新日内状态的因子展示，不回写历史缓存，
+    也不替代 Tushare 的正式历史日线。
+    """
+    try:
+        today = pd.Timestamp.now().normalize()
+        latest_cached = pd.to_datetime(contracts_data["trade_date"].astype(str)).max().normalize()
+        if latest_cached >= today:
+            return contracts_data
+
+        realtime_factor = RollYieldFactor()
+        contracts = realtime_factor.get_contracts_by_oi(config.product.lower(), config.min_oi)
+        if not contracts:
+            return contracts_data
+
+        dominant_contract = contracts[0]
+
+        from src.data_fetcher.ths_client import THSClient
+
+        quote = THSClient().get_realtime_quote(dominant_contract["code"])
+        if not quote:
+            return contracts_data
+
+        patched = contracts_data.copy()
+        row = {col: None for col in patched.columns}
+        row.update(
+            {
+                "ts_code": dominant_contract["code"],
+                "trade_date": today.strftime("%Y%m%d"),
+                "close": float(quote.get("latest", 0) or 0),
+                "oi": float(quote.get("openInterest", 0) or 0),
+                "vol": float(quote.get("volume", 0) or 0),
+            }
+        )
+        if "open" in patched.columns:
+            row["open"] = float(quote.get("open", 0) or row["close"])
+        if "high" in patched.columns:
+            row["high"] = float(quote.get("high", 0) or row["close"])
+        if "low" in patched.columns:
+            row["low"] = float(quote.get("low", 0) or row["close"])
+
+        patched = pd.concat([patched, pd.DataFrame([row])], ignore_index=True)
+        patched["trade_date"] = patched["trade_date"].astype(str)
+        patched = patched.drop_duplicates(subset=["ts_code", "trade_date"], keep="last")
+        return patched
+    except Exception as exc:
+        print(f"  跳过同花顺最新价补丁: {exc}")
+        return contracts_data
 
 
 def _print_realtime_report(product: str, contracts_df: pd.DataFrame, pairs_df: pd.DataFrame, summary: dict) -> None:
@@ -188,7 +242,7 @@ def run_history(config: ResearchConfig) -> Tuple[pd.DataFrame, pd.DataFrame]:
     contracts_cache = config.cache_dir / f"{config.product.lower()}_contracts_daily.csv"
     ry_cache = config.cache_dir / f"{config.product.lower()}_roll_yield_{config.ry_method}.csv"
     target_end_date = (config.end_date or datetime.now().strftime("%Y%m%d")).replace("-", "")
-    ts_client = TushareClient()
+    ts_client = None
 
     if config.use_cache and contracts_cache.exists():
         print(f"从缓存加载合约数据: {contracts_cache}")
@@ -196,32 +250,38 @@ def run_history(config: ResearchConfig) -> Tuple[pd.DataFrame, pd.DataFrame]:
         last_cached_date = contracts_data["trade_date"].astype(str).max()
 
         if last_cached_date < target_end_date:
-            latest_slice = contracts_data[contracts_data["trade_date"].astype(str) == last_cached_date].copy()
-            probe_contract = latest_slice.sort_values("oi", ascending=False)["ts_code"].iloc[0]
-            available_end_date = ts_client.get_latest_available_trade_date(
-                ts_code=probe_contract,
-                start_date=last_cached_date,
-                end_date=target_end_date,
-            )
-
-            if available_end_date:
-                print(f"历史行情当前最新可用日期: {available_end_date}")
-            else:
-                print("未探测到比缓存更晚的历史交易日，继续使用现有缓存")
-
-            if available_end_date and available_end_date > last_cached_date:
-                print(f"检测到历史缓存较旧，开始增量更新: {last_cached_date} -> {available_end_date}")
-                contracts_data = ts_client.update_all_contracts_daily(
-                    product=config.product,
-                    existing_data=contracts_data,
-                    end_date=available_end_date,
-                    min_oi=config.min_oi,
+            try:
+                ts_client = TushareClient()
+                latest_slice = contracts_data[contracts_data["trade_date"].astype(str) == last_cached_date].copy()
+                probe_contract = latest_slice.sort_values("oi", ascending=False)["ts_code"].iloc[0]
+                available_end_date = ts_client.get_latest_available_trade_date(
+                    ts_code=probe_contract,
+                    start_date=last_cached_date,
+                    end_date=target_end_date,
                 )
-                config.cache_dir.mkdir(parents=True, exist_ok=True)
-                contracts_data.to_csv(contracts_cache, index=False)
-                print(f"已更新合约缓存: {contracts_cache}")
+
+                if available_end_date:
+                    print(f"历史行情当前最新可用日期: {available_end_date}")
+                else:
+                    print("未探测到比缓存更晚的历史交易日，继续使用现有缓存")
+
+                if available_end_date and available_end_date > last_cached_date:
+                    print(f"检测到历史缓存较旧，开始增量更新: {last_cached_date} -> {available_end_date}")
+                    contracts_data = ts_client.update_all_contracts_daily(
+                        product=config.product,
+                        existing_data=contracts_data,
+                        end_date=available_end_date,
+                        min_oi=config.min_oi,
+                    )
+                    config.cache_dir.mkdir(parents=True, exist_ok=True)
+                    contracts_data.to_csv(contracts_cache, index=False)
+                    print(f"已更新合约缓存: {contracts_cache}")
+            except ValueError as exc:
+                print(f"{exc}")
+                print("检测到 Tushare 不可用，跳过在线更新，继续使用本地历史缓存")
     else:
         print("从Tushare获取合约数据...")
+        ts_client = TushareClient()
         calc = RollYieldHistory(ts_client)
         contracts_data = calc.load_all_contracts_data(
             product=config.product,
@@ -321,6 +381,7 @@ def run_ic_analysis(config: ResearchConfig, ry_data: pd.DataFrame, contracts_dat
 def run_momentum_analysis(config: ResearchConfig, contracts_data: pd.DataFrame) -> FactorICAnalyzer:
     _print_header("[动量] 价格动量因子分析")
 
+    contracts_data = _augment_contracts_with_ths_latest(config, contracts_data)
     price_data = load_dominant_price(contracts_data)
     momentum = MomentumFactor()
     signal_data, _ = momentum.print_analysis_report(price_data)
@@ -356,6 +417,7 @@ def run_momentum_analysis(config: ResearchConfig, contracts_data: pd.DataFrame) 
 def run_macd_analysis(config: ResearchConfig, contracts_data: pd.DataFrame) -> pd.DataFrame:
     _print_header("[MACD] 趋势与信号分析")
 
+    contracts_data = _augment_contracts_with_ths_latest(config, contracts_data)
     price_data = load_dominant_price(contracts_data)
     macd = MACDFactor(denoise=config.denoise, smooth_window=config.smooth_window)
     signal_data, _ = macd.print_analysis_report(price_data)
@@ -438,6 +500,7 @@ def run_virtual_ratio_analysis(config: ResearchConfig, contracts_data: pd.DataFr
 def run_intraday_skew_analysis(config: ResearchConfig, contracts_data: pd.DataFrame) -> FactorICAnalyzer:
     _print_header("[偏度因子] 5分钟收益率偏度")
 
+    contracts_data = _augment_contracts_with_ths_latest(config, contracts_data)
     dominant_data = load_dominant_contract_by_date(contracts_data)
     output_dir = _get_output_base_dir(config) / "intraday_skew"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -593,6 +656,7 @@ def _build_product_snapshot(config: ResearchConfig) -> Dict[str, str]:
     ry_data, contracts_data = run_history(config)
 
     latest_ry = ry_data.sort_values("trade_date").iloc[-1]
+    contracts_data = _augment_contracts_with_ths_latest(config, contracts_data)
     price_data = load_dominant_price(contracts_data)
 
     momentum = MomentumFactor()
@@ -1518,6 +1582,13 @@ def run_factor_manual_pdf(config: ResearchConfig) -> Path:
     return pdf_path
 
 
+def run_signal_table(config: ResearchConfig) -> Path:
+    _print_header("[图片] 指标信号总表导出")
+    image_path = export_signal_table_image(product=config.product.upper(), output_dir=config.output_dir)
+    print(f"指标信号总表已导出到: {image_path}")
+    return image_path
+
+
 def run_mode(mode: str, config: Optional[ResearchConfig] = None) -> None:
     config = config or ResearchConfig()
 
@@ -1569,6 +1640,8 @@ def run_mode(mode: str, config: Optional[ResearchConfig] = None) -> None:
         run_pdf_report(config)
     elif mode == "manual_pdf":
         run_factor_manual_pdf(config)
+    elif mode == "signal_table":
+        run_signal_table(config)
     else:
         if mode == "all":
             run_all_products(replace(config, product="ALL"))

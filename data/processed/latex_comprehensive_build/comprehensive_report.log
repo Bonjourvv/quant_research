@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.5.8)  23 APR 2026 08:51
+This is XeTeX, Version 3.141592653-2.6-0.999995 (TeX Live 2023) (preloaded format=xelatex 2023.5.8)  6 MAY 2026 09:56
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -731,7 +731,82 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 \tf@toc=\write4
 \openout4 = `comprehensive_report.toc'.
 
- [2] [3
+ [2]
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+[]|\TU/STSong(0)/m/n/10.95 展 期 \TU/lmr/m/n/10.95 +2.81%
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+\TU/lmr/m/n/10.95 / \TU/STSong(0)/m/n/10.95 动 量 \TU/lmr/m/n/10.95 side-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+\TU/lmr/m/n/10.95 ways / MACD
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 33--33
+[]|\TU/lmr/m/n/10.95 MACD
+ []
+
+
+Underfull \hbox (badness 1939) in paragraph at lines 33--33
+[]|\TU/STSong(0)/m/n/10.95 等 待 回 调 后
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+[]|\TU/STSong(0)/m/n/10.95 展 期 \TU/lmr/m/n/10.95 -0.38%
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+\TU/lmr/m/n/10.95 / \TU/STSong(0)/m/n/10.95 动 量 \TU/lmr/m/n/10.95 up-
+ []
+
+
+Underfull \hbox (badness 6252) in paragraph at lines 34--34
+\TU/lmr/m/n/10.95 trend / MACD
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 34--34
+[]|\TU/lmr/m/n/10.95 MACD
+ []
+
+
+Underfull \hbox (badness 1939) in paragraph at lines 34--34
+[]|\TU/STSong(0)/m/n/10.95 等 待 回 调 后
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+[]|\TU/STSong(0)/m/n/10.95 展 期 \TU/lmr/m/n/10.95 -0.27% /
+ []
+
+
+Underfull \hbox (badness 2285) in paragraph at lines 35--35
+\TU/STSong(0)/m/n/10.95 动 量 \TU/lmr/m/n/10.95 sideways /
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 35--35
+[]|\TU/STSong(0)/m/n/10.95 展 期 收 益 率
+ []
+
+
+Underfull \hbox (badness 1939) in paragraph at lines 35--35
+[]|\TU/STSong(0)/m/n/10.95 以 观 察 和 择
+ []
+
+
+Overfull \hbox (74.31657pt too wide) in paragraph at lines 29--38
+ [] 
+ []
+
+[3
 
 ] [4] [5] [6] [7]
 File: /Users/vv/Downloads/nickel_research/data/processed/ni/roll_yield_seasonal
@@ -753,8 +828,7 @@ File: /Users/vv/Downloads/nickel_research/data/processed/ni/roll_yield_backtest
 _nav.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/roll_yield_backtest_nav.
 png>
-
-[12]
+ [12]
 File: /Users/vv/Downloads/nickel_research/data/processed/ni/momentum/momentum_s
 easonal.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/momentum/momentum_season
@@ -788,7 +862,8 @@ File: /Users/vv/Downloads/nickel_research/data/processed/ni/macd/macd_chart.png
 
 
 
-] [19]
+]
+[19]
 File: /Users/vv/Downloads/nickel_research/data/processed/ni/macd/macd_seasonal.
 png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/macd/macd_seasonal.png>
@@ -825,8 +900,7 @@ kew_seasonal.png>
 
 
 
-]
-[27]
+] [27]
 File: /Users/vv/Downloads/nickel_research/data/processed/ni/intraday_skew/intra
 day_skew_rolling_ic.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/intraday_skew/intraday_s
@@ -861,7 +935,8 @@ File: /Users/vv/Downloads/nickel_research/data/processed/ni/roll_virtual_combo/
 roll_virtual_combo_group_returns.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/roll_virtual_combo/roll_
 virtual_combo_group_returns.png>
- [34]
+
+[34]
 File: /Users/vv/Downloads/nickel_research/data/processed/ni/roll_virtual_combo/
 roll_virtual_combo_backtest_nav.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/roll_virtual_combo/roll_
@@ -892,37 +967,363 @@ ion_price_flow_backtest_nav.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni/position_flow/position_p
 rice_flow_backtest_nav.png>
  [40]
-File: /Users/vv/Downloads/nickel_research/data/processed/vix_panic_reversion/ba
-cktest_chart.png Graphic file (type bmp)
-</Users/vv/Downloads/nickel_research/data/processed/vix_panic_reversion/backtes
-t_chart.png>
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_seasonal
+.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_seasonal.png>
+
  [41
 
 
 
 
-]
-[42]
+] [42]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_rolling_
+ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_rolling_ic.pn
+g>
+ [43]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_group_re
+turns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_group_returns
+.png>
+ [44]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_backtest
+_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_yield_backtest_nav.
+png>
+ [45]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_s
+easonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_season
+al.png>
+ [46
+
+
+
+
+] [47]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_r
+olling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_rollin
+g_ic.png>
+ [48]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_g
+roup_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_group_
+returns.png>
+
+[49]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_b
+acktest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/momentum/momentum_backte
+st_nav.png>
+ [50]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/macd/macd_chart.png
+ Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/macd/macd_chart.png>
+ [51
+
+
+
+
+] [52]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/macd/macd_seasonal.
+png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/macd/macd_seasonal.png>
+ [53]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtu
+al_real_ratio_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_re
+al_ratio_seasonal.png>
+ [54
+
+
+] [55]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtu
+al_real_ratio_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_re
+al_ratio_rolling_ic.png>
+ [56]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtu
+al_real_ratio_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_re
+al_ratio_group_returns.png>
+ [57]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtu
+al_real_ratio_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/virtual_ratio/virtual_re
+al_ratio_backtest_nav.png>
+ [58]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intra
+day_skew_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_s
+kew_seasonal.png>
+ [59
+
+
+
+
+] [60]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intra
+day_skew_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_s
+kew_rolling_ic.png>
+ [61]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intra
+day_skew_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_s
+kew_group_returns.png>
+ [62]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intra
+day_skew_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/intraday_skew/intraday_s
+kew_backtest_nav.png>
+ [63]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/
+roll_virtual_combo_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_
+virtual_combo_seasonal.png>
+
+[64
+
+
+
+
+] [65]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/
+roll_virtual_combo_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_
+virtual_combo_rolling_ic.png>
+ [66]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/
+roll_virtual_combo_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_
+virtual_combo_group_returns.png>
+ [67]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/
+roll_virtual_combo_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/roll_virtual_combo/roll_
+virtual_combo_backtest_nav.png>
+ [68]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/posit
+ion_price_flow_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_p
+rice_flow_seasonal.png>
+ [69
+
+
+
+
+] [70]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/posit
+ion_price_flow_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_p
+rice_flow_rolling_ic.png>
+ [71]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/posit
+ion_price_flow_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_p
+rice_flow_group_returns.png>
+ [72]
+File: /Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/posit
+ion_price_flow_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/ss/position_flow/position_p
+rice_flow_backtest_nav.png>
+ [73]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_seasonal
+.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_seasonal.png>
+
+ [74
+
+
+
+
+] [75]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_rolling_
+ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_rolling_ic.pn
+g>
+ [76]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_group_re
+turns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_group_returns
+.png>
+ [77]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_backtest
+_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_yield_backtest_nav.
+png>
+ [78]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_s
+easonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_season
+al.png>
+
+[79
+
+
+
+
+] [80]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_r
+olling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_rollin
+g_ic.png>
+ [81]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_g
+roup_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_group_
+returns.png>
+ [82]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_b
+acktest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/momentum/momentum_backte
+st_nav.png>
+ [83]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/macd/macd_chart.png
+ Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/macd/macd_chart.png>
+ [84
+
+
+
+
+] [85]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/macd/macd_seasonal.
+png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/macd/macd_seasonal.png>
+ [86]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtu
+al_real_ratio_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_re
+al_ratio_seasonal.png>
+ [87
+
+
+] [88]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtu
+al_real_ratio_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_re
+al_ratio_rolling_ic.png>
+ [89]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtu
+al_real_ratio_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_re
+al_ratio_group_returns.png>
+ [90]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtu
+al_real_ratio_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/virtual_ratio/virtual_re
+al_ratio_backtest_nav.png>
+ [91]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intra
+day_skew_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_s
+kew_seasonal.png>
+ [92
+
+
+
+
+] [93]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intra
+day_skew_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_s
+kew_rolling_ic.png>
+
+[94]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intra
+day_skew_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_s
+kew_group_returns.png>
+ [95]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intra
+day_skew_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/intraday_skew/intraday_s
+kew_backtest_nav.png>
+ [96]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/
+roll_virtual_combo_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_
+virtual_combo_seasonal.png>
+ [97
+
+
+
+
+] [98]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/
+roll_virtual_combo_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_
+virtual_combo_rolling_ic.png>
+ [99]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/
+roll_virtual_combo_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_
+virtual_combo_group_returns.png>
+ [100]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/
+roll_virtual_combo_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/roll_virtual_combo/roll_
+virtual_combo_backtest_nav.png>
+ [101]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/posit
+ion_price_flow_seasonal.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_p
+rice_flow_seasonal.png>
+ [102
+
+
+
+
+] [103]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/posit
+ion_price_flow_rolling_ic.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_p
+rice_flow_rolling_ic.png>
+ [104]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/posit
+ion_price_flow_group_returns.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_p
+rice_flow_group_returns.png>
+ [105]
+File: /Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/posit
+ion_price_flow_backtest_nav.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/cu/position_flow/position_p
+rice_flow_backtest_nav.png>
+ [106]
+File: /Users/vv/Downloads/nickel_research/data/processed/vix_panic_reversion/ba
+cktest_chart.png Graphic file (type bmp)
+</Users/vv/Downloads/nickel_research/data/processed/vix_panic_reversion/backtes
+t_chart.png>
+
+[107
+
+
+
+
+] [108]
 File: /Users/vv/Downloads/nickel_research/data/processed/ni_vix_panic_reversion
 /backtest_chart.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/ni_vix_panic_reversion/back
 test_chart.png>
- [43
+ [109
 
-] [44]
-Overfull \hbox (65.9656pt too wide) in paragraph at lines 581--582
+] [110]
+Overfull \hbox (65.9656pt too wide) in paragraph at lines 1201--1202
 []\TU/STSong(0)/m/n/10.95 汇 总 表\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel_r
 esearch/data/processed/comparison/factor_product_comparison.csv 
  []
 
 
-Overfull \hbox (85.70845pt too wide) in paragraph at lines 582--583
+Overfull \hbox (85.70845pt too wide) in paragraph at lines 1202--1203
 []\TU/STSong(0)/m/n/10.95 准 确 率 图\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel
 _research/data/processed/comparison/factor_abs_ic5d_comparison.png 
  []
 
 
-Overfull \hbox (120.19pt too wide) in paragraph at lines 583--584
+Overfull \hbox (120.19pt too wide) in paragraph at lines 1203--1204
 []\TU/STSong(0)/m/n/10.95 超 额 收 益 图\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nick
 el_research/data/processed/comparison/factor_excess_return_comparison.png 
  []
@@ -931,34 +1332,34 @@ File: /Users/vv/Downloads/nickel_research/data/processed/comparison/factor_abs_
 ic5d_comparison.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/comparison/factor_abs_ic5d_
 comparison.png>
-[45
+[111
 
-] [46]
+] [112]
 File: /Users/vv/Downloads/nickel_research/data/processed/comparison/factor_exce
 ss_return_comparison.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/comparison/factor_excess_re
 turn_comparison.png>
- [47]
-Overfull \hbox (104.04968pt too wide) in paragraph at lines 615--616
+ [113]
+Overfull \hbox (104.04968pt too wide) in paragraph at lines 1235--1236
 []\TU/STSong(0)/m/n/10.95 原 始 汇 总\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel
 _research/data/processed/comparison/denoise/denoise_comparison_raw.csv 
  []
 
 
-Overfull \hbox (110.41162pt too wide) in paragraph at lines 616--617
+Overfull \hbox (110.41162pt too wide) in paragraph at lines 1236--1237
 []\TU/STSong(0)/m/n/10.95 差 异 汇 总\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel
 _research/data/processed/comparison/denoise/denoise_comparison_delta.csv 
  []
 
 
-Overfull \hbox (163.64935pt too wide) in paragraph at lines 617--618
+Overfull \hbox (163.64935pt too wide) in paragraph at lines 1237--1238
 []\TU/lmr/m/n/10.95 |5 \TU/STSong(0)/m/n/10.95 日 \TU/lmr/m/n/10.95 IC| \TU/STSo
 ng(0)/m/n/10.95 对 比 图\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel_research/da
 ta/processed/comparison/denoise/denoise_abs_ic5d_comparison.png 
  []
 
 
-Overfull \hbox (189.31732pt too wide) in paragraph at lines 618--619
+Overfull \hbox (189.31732pt too wide) in paragraph at lines 1238--1239
 []\TU/STSong(0)/m/n/10.95 超 额 收 益 对 比 图\TU/lmr/m/n/10.95 : /Users/vv/Downloads/
 nickel_research/data/processed/comparison/denoise/denoise_excess_return_compari
 son.png 
@@ -968,22 +1369,22 @@ File: /Users/vv/Downloads/nickel_research/data/processed/comparison/denoise/den
 oise_abs_ic5d_comparison.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/comparison/denoise/denoise_
 abs_ic5d_comparison.png>
-[48
+[114
 
 
-] [49]
+] [115]
 File: /Users/vv/Downloads/nickel_research/data/processed/comparison/denoise/den
 oise_excess_return_comparison.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/comparison/denoise/denoise_
 excess_return_comparison.png>
- [50]
-Overfull \hbox (99.79015pt too wide) in paragraph at lines 646--647
+ [116]
+Overfull \hbox (99.79015pt too wide) in paragraph at lines 1266--1267
 []\TU/STSong(0)/m/n/10.95 汇 总 表\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel_r
 esearch/data/processed/comparison/vix_strategy_product_comparison.csv 
  []
 
 
-Overfull \hbox (91.53384pt too wide) in paragraph at lines 647--648
+Overfull \hbox (91.53384pt too wide) in paragraph at lines 1267--1268
 []\TU/STSong(0)/m/n/10.95 图 表\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel_res
 earch/data/processed/comparison/vix_strategy_product_comparison.png 
  []
@@ -992,17 +1393,17 @@ File: /Users/vv/Downloads/nickel_research/data/processed/comparison/vix_strateg
 y_product_comparison.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/comparison/vix_strategy_pro
 duct_comparison.png>
-[51
+[117
 
 
-] [52]
-Overfull \hbox (140.96213pt too wide) in paragraph at lines 668--669
+] [118]
+Overfull \hbox (140.96213pt too wide) in paragraph at lines 1288--1289
 []\TU/STSong(0)/m/n/10.95 汇 总 表\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel_r
 esearch/data/processed/comparison/vix_strategy_product_comparison_reverse.csv 
  []
 
 
-Overfull \hbox (132.70584pt too wide) in paragraph at lines 669--670
+Overfull \hbox (132.70584pt too wide) in paragraph at lines 1289--1290
 []\TU/STSong(0)/m/n/10.95 图 表\TU/lmr/m/n/10.95 : /Users/vv/Downloads/nickel_res
 earch/data/processed/comparison/vix_strategy_product_comparison_reverse.png 
  []
@@ -1011,19 +1412,19 @@ File: /Users/vv/Downloads/nickel_research/data/processed/comparison/vix_strateg
 y_product_comparison_reverse.png Graphic file (type bmp)
 </Users/vv/Downloads/nickel_research/data/processed/comparison/vix_strategy_pro
 duct_comparison_reverse.png>
-[53
+[119
 
-] [54] (./comprehensive_report.aux)
+] [120] (./comprehensive_report.aux)
 Package rerunfilecheck Info: File `comprehensive_report.out' has not changed.
-(rerunfilecheck)             Checksum: 1DD9F76BF54A19CC049A77A8CA6B3E94;4158.
+(rerunfilecheck)             Checksum: 10FC7146D4296CCB2CBC88F310A7039C;6732.
  ) 
 Here is how much of TeX's memory you used:
- 17125 strings out of 476683
- 392329 string characters out of 5804048
- 1869018 words of memory out of 5000000
- 37079 multiletter control sequences out of 15000+600000
+ 17534 strings out of 476683
+ 431119 string characters out of 5804048
+ 1868018 words of memory out of 5000000
+ 37474 multiletter control sequences out of 15000+600000
  520674 words of font info for 83 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 89i,11n,97p,1218b,507s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 89i,11n,97p,1218b,427s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on comprehensive_report.pdf (54 pages).
+Output written on comprehensive_report.pdf (120 pages).

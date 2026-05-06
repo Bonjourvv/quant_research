@@ -12,7 +12,7 @@ def main() -> None:
         "mode",
         nargs="?",
         default="all",
-        choices=["realtime", "history", "threshold", "ic", "momentum", "macd", "virtual_ratio", "intraday_skew", "roll_virtual_combo", "position_flow", "summary", "compare", "denoise_compare", "vix_panic", "ni_vix_panic", "commodity_vix_panic", "vix_compare", "vix_compare_reverse", "pdf", "manual_pdf", "all"],
+        choices=["realtime", "history", "threshold", "ic", "momentum", "macd", "virtual_ratio", "intraday_skew", "roll_virtual_combo", "position_flow", "summary", "compare", "denoise_compare", "vix_panic", "ni_vix_panic", "commodity_vix_panic", "vix_compare", "vix_compare_reverse", "pdf", "manual_pdf", "signal_table", "all"],
         help="运行模式",
     )
     parser.add_argument("--product", default="NI", help="研究品种，支持 NI / SS / ALL，默认 NI")

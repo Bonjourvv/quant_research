@@ -54,6 +54,14 @@ class TushareClient:
                 return self.pro.query(api_name, fields=fields, **kwargs)
             except (RequestException, TimeoutError, Exception) as exc:
                 last_error = exc
+                message = str(exc)
+
+                # token 错误属于配置问题，重试没有意义，直接给出明确提示。
+                if "token不对" in message or "token不正确" in message or "token" in message and "确认" in message:
+                    raise ValueError(
+                        "当前配置的 TUSHARE_TOKEN 无效，请更新项目根目录 .env 中的 TUSHARE_TOKEN 后重试。"
+                    ) from exc
+
                 if attempt == self.max_retries:
                     break
                 wait_seconds = min(2 * attempt, 5)
