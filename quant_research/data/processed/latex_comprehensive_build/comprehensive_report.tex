@@ -1,0 +1,1330 @@
+\documentclass[11pt,a4paper]{ctexart}
+        \usepackage[margin=2cm]{geometry}
+        \usepackage{amsmath,amssymb,booktabs,longtable,tabularx,array,graphicx,float,hyperref}
+        \usepackage{fancyhdr}
+        \usepackage{titlesec}
+        \usepackage{setspace}
+        \setstretch{1.15}
+        \pagestyle{fancy}
+        \fancyhf{}
+        \fancyfoot[C]{\thepage}
+        \titleformat{\section}{\Large\bfseries}{\thesection}{0.8em}{}
+        \titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.6em}{}
+        \title{期货研究综合总报告}
+        \author{nickel\_research}
+        \date{2026-04-24 00:30:50}
+        \begin{document}
+        \maketitle
+        \tableofcontents
+        \clearpage
+        \section{报告说明}
+        \begin{itemize}
+        \item 本报告把当前系统中的因子手册、方法论、历史分位数、阈值选择、交易信号解释、因子回测逻辑、超额收益定义、各品种结果图表和策略扩展统一合并到一个文件中。
+        \item 因子与策略图表均来自系统最新一次从原始数据重新计算后的导出结果，而不是旧图的拼接。
+        \item 当前覆盖品种包括：沪镍、不锈钢、沪铜。
+        \end{itemize}
+        \section{研究方法与系统说明}
+\subsection{数据来源与刷新机制}
+\begin{itemize}
+\item 历史日线主库使用 Tushare，负责全合约历史、主力切换、阈值标定、IC 与回测分析。
+\item 实时快照使用同花顺，负责盘中价格、成交量、持仓量、虚实盘比和持仓联动信号。
+\item 宏观情绪扩展使用 FRED，主要用于 VIX 系列策略研究。
+\item 系统会优先读取本地缓存；若缓存落后于数据源最新可用交易日，则自动增量更新后再计算因子。
+\end{itemize}
+
+\subsection{历史分位数与阈值选择}
+\begin{itemize}
+\item 展期收益率因子默认采用全历史固定分位数阈值。
+\item 当前默认配置为：10\% 分位作为做多阈值，90\% 分位作为做空阈值。
+\item 这样做的目的是只在极端贴水或极端升水区域触发方向判断，减少中性区间噪声。
+\item 系统也保留滚动分位数阈值接口，可按 252 日窗口动态更新阈值。
+\end{itemize}
+
+\subsection{交易信号与解释逻辑}
+\begin{itemize}
+\item 展期收益率：贴水更深通常偏多，升水更深通常偏空。
+\item 动量：价格趋势延续时偏向顺势，趋势减弱时更多体现震荡或反转。
+\item MACD：金叉、死叉、柱体放大和收敛用于识别趋势拐点与强弱变化。
+\item 虚实盘比：高换手偏向短线博弈，低虚实盘比且增仓更像趋势资金沉淀。
+\item 持仓联动：价格与持仓增减组合判断多头增仓、空头增仓、空头回补和多头离场。
+\item 5分钟偏度：从日内收益分布的不对称性识别短期情绪尾部。
+\item 组合因子：要求多个底层因子形成共振，避免单一信号误判。
+\end{itemize}
+
+\subsection{因子回测与评估逻辑}
+\begin{itemize}
+\item IC（Information Coefficient）衡量因子值与未来收益的相关性，当前默认展示 1/3/5/10/20 日周期。
+\item 滚动 IC 使用 60 日窗口，用于观察因子稳定性与阶段性失效。
+\item 分组收益把样本按因子值分成 5 组，比较不同分组未来收益表现。
+\item 分位数组合回测使用上下分位阈值形成多空或多空仓位，并按固定持有期滚动计算净值。
+\item 当前主展示持有期为 3 日，辅助展示 5/10/20 日周期。
+\item 超额收益定义为：策略累计收益减去基准买入持有累计收益。
+\item 因子准确率常用 |5日IC| 近似观察；但高 IC 不必然对应高策略收益，因此同时展示超额收益和净值曲线。
+\end{itemize}
+
+\subsection{策略扩展模块}
+\begin{itemize}
+\item VIX + RSI 恐慌反转策略把价格超卖和情绪抬升同时作为入场条件。
+\item 开仓条件示例：RSI 进入超卖区域且 VIX 的 Z 分数显著高于近期均值。
+\item 平仓条件示例：RSI 回升、VIX 回落至均值附近或持有天数达到上限。
+\item 该模块目前既研究标普500，也研究沪镍主力连续，便于比较风险情绪在不同资产上的传播效果。
+\end{itemize}
+        \section{因子手册与公式说明}
+\subsection{展期收益率因子}
+\paragraph{公式}
+\begin{itemize}
+\item $R_t=\dfrac{\ln(P_{near})-\ln(P_{far})}{T_{far}-T_{near}}\times 365$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $P_{near}, P_{far}$: 近月和远月合约价格。
+\item $T_{far}, T_{near}$: 两个合约到期日的间隔天数，用于期限归一化。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $R_t$ 较高时，通常对应远月贴水、现货偏紧，价格更容易上行。
+\item $R_t$ 较低时，通常对应远月升水、供应宽松，价格更容易承压。
+\end{itemize}
+\subsection{价格动量因子}
+\paragraph{公式}
+\begin{itemize}
+\item $Momentum_t=\dfrac{Close_t}{Close_{t-N}}-1$
+\item $TrendStrength_t=\dfrac{MA_{short}}{MA_{long}}-1$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $Close_t, Close_{t-N}$: 当前与 $N$ 日前收盘价。
+\item $MA_{short}, MA_{long}$: 短周期和长周期均线。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $Momentum_t>0$ 且 $TrendStrength_t>0$ 时，通常表示上涨趋势延续。
+\item $Momentum_t<0$ 且 $TrendStrength_t<0$ 时，通常表示下跌趋势延续。
+\end{itemize}
+\subsection{MACD 因子}
+\paragraph{公式}
+\begin{itemize}
+\item $DIF=EMA_{12}(Close)-EMA_{26}(Close)$
+\item $DEA=EMA_{9}(DIF)$
+\item $MACD\ Histogram=2\times(DIF-DEA)$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $EMA_{12}, EMA_{26}$: 快线与慢线指数移动平均。
+\item $DIF, DEA$: 快慢线差值及其平滑线。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $DIF$ 上穿 $DEA$ 常被视为金叉，趋势偏多。
+\item $DIF$ 下穿 $DEA$ 常被视为死叉，趋势偏空。
+\item $MACD\ Histogram$ 扩大表示动能增强，收敛表示动能减弱。
+\end{itemize}
+\subsection{虚实盘比因子}
+\paragraph{公式}
+\begin{itemize}
+\item $VRR=\dfrac{Volume}{OpenInterest}$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $Volume, OpenInterest$: 成交量与持仓量。
+\item $VRR$ 越高，表示单位持仓对应的换手越频繁。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $VRR$ 偏高时，通常表示短线资金活跃、博弈更强。
+\item $VRR$ 较低且增仓时，通常表示筹码沉淀、趋势资金更稳定。
+\end{itemize}
+\subsection{持仓-价格联动因子}
+\paragraph{公式}
+\begin{itemize}
+\item $PriceChange_t=\dfrac{Close_t}{Close_{t-1}}-1$
+\item $OIChange_t=\dfrac{OI_t-OI_{t-1}}{OI_{t-1}}$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $Close_t, Close_{t-1}$: 当日与前一日收盘价。
+\item $OI_t, OI_{t-1}$: 当日与前一日持仓量。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $PriceChange_t>0$ 且 $OIChange_t>0$ 时，通常表示多头增仓。
+\item $PriceChange_t<0$ 且 $OIChange_t>0$ 时，通常表示空头增仓。
+\item $PriceChange_t>0$ 且 $OIChange_t<0$ 时，通常表示空头回补。
+\item $PriceChange_t<0$ 且 $OIChange_t<0$ 时，通常表示多头离场。
+\end{itemize}
+\subsection{5分钟偏度因子}
+\paragraph{公式}
+\begin{itemize}
+\item $skew_t=E\left[\left(\dfrac{ret_i-\mu_{5min}}{\sigma_{5min}}\right)^3\right]$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $ret_i$: 回看期内商品期货的 5 分钟收益率序列。
+\item $\mu_{5min}$: 回看期内所有 5 分钟收益率的均值。
+\item $\sigma_{5min}$: 回看期内所有 5 分钟收益率的标准差。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $skew_t$ 显著偏高时，通常表示价格上行尾部更长，短期更容易在情绪回落后承压。
+\item $skew_t$ 显著偏低时，通常表示价格下行尾部更长，恐慌释放后更容易出现反弹。
+\item 把 $ret_i$ 拆成正收益与负收益子样本，还可以得到上行偏度和下行偏度。
+\end{itemize}
+\subsection{RSI 指标}
+\paragraph{公式}
+\begin{itemize}
+\item $RSI=100-\dfrac{100}{1+RS}$
+\item $RS=\dfrac{AvgGain_n}{AvgLoss_n}$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $AvgGain_n, AvgLoss_n$: 过去 $n$ 个周期平均上涨与下跌幅度。
+\item $RSI$ 数值通常位于 $0$ 到 $100$ 之间。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $RSI$ 越低，通常表示价格越接近短期超卖。
+\item $RSI$ 越高，通常表示价格越接近短期超买。
+\end{itemize}
+\subsection{VIX 情绪因子}
+\paragraph{公式}
+\begin{itemize}
+\item $VIX_z=\dfrac{VIX-\mu_n(VIX)}{\sigma_n(VIX)}$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $\mu_n(VIX)$: $VIX$ 在过去 $n$ 日的均值。
+\item $\sigma_n(VIX)$: $VIX$ 在过去 $n$ 日的标准差。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item $VIX_z$ 越高，表示当前恐慌显著高于近期常态。
+\item $VIX_z$ 更适合作为情绪过滤器，而不是单独方向信号。
+\end{itemize}
+\subsection{VIX + RSI 恐慌反转策略}
+\paragraph{公式}
+\begin{itemize}
+\item $Entry:\ RSI \leq 30,\ \ VIX_z \geq 1.0$
+\item $Exit:\ RSI \geq 55\ \mathrm{or}\ VIX \leq \mu_n(VIX)\ \mathrm{or}\ HoldingDays \geq 10$
+\item $StrategyReturn_t=Position_{t-1}\times Return_t$
+\end{itemize}
+\paragraph{变量定义}
+\begin{itemize}
+\item $Entry$: $RSI$ 跌入超卖且 $VIX_z$ 显著升高时开仓。
+\item $Exit$: 反弹兑现、恐慌缓解或持仓超过上限时平仓。
+\end{itemize}
+\paragraph{业务含义}
+\begin{itemize}
+\item 只有 $RSI$ 超卖和 $VIX_z$ 抬升同时出现，才认为反转信号更有效。
+\item $StrategyReturn_t$ 本质上是用情绪过滤后的价格反转收益。
+\end{itemize}
+        \section{沪镍 专题}
+
+\subsection{最新因子状态总览}
+\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.46\linewidth}}
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endfirsthead
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endhead
+展期收益率 & -- & -- \\
+价格动量 & +1 & -- \\
+MACD & +0 & uptrend \\
+虚实盘比 & neutral & 虚实盘比平稳，短线与持仓结构均衡 \\
+5分钟偏度 & neutral & 偏度处于中性区域，情绪不对称性不明显 \\
+展期+虚实盘组合 & neutral & 展期与虚实盘信号未形成共振，维持中性判断 \\
+持仓-价格联动 & neutral & 价格与持仓变化均不显著，资金方向暂不明确 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{沪镍 历史分位数}
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+样本数 & 均值 & 5\% & 10\% & 25\% & 50\% & 75\% & 90\% \\
+\midrule
+2689 & -1.72\% & -21.09\% & -15.11\% & -2.32\% & 1.36\% & 2.97\% & 5.15\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{展期收益率因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 最新展期收益率: +3.11\%
+\item 样本数量: 2689
+\item 历史均值: -1.72\%
+\item 历史标准差: 8.58\%
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_yield_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_yield_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_yield_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_yield_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - 展期收益率因子}
+\end{figure}
+
+\subsection{价格动量因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 最新收盘价: 142120.00
+\item 20日动量: +4.40\%
+\item 趋势强度: +1.75\%
+\item 趋势标签: uptrend
+\item 交易信号: +1
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/momentum/momentum_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/momentum/momentum_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/momentum/momentum_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/momentum/momentum_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - 价格动量因子}
+\end{figure}
+
+\subsection{MACD 因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 当前趋势: uptrend
+\item DIF / DEA: 1692.64 / 979.31
+\item MACD柱: 1426.66
+\item 当前信号: +0
+\item 当前持仓: +1
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/macd/macd_chart.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/macd/macd_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - MACD 因子}
+\end{figure}
+
+\subsection{虚实盘比因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: NI2606.SHF
+\item 收盘价: 142120.00
+\item 虚实盘比: 1.923
+\item 持仓变化: +9756
+\item 成交变化: +124094
+\item 交易信号: neutral
+\item 信号解读: 虚实盘比平稳，短线与持仓结构均衡
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/virtual_ratio/virtual_real_ratio_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/virtual_ratio/virtual_real_ratio_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/virtual_ratio/virtual_real_ratio_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/virtual_ratio/virtual_real_ratio_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - 虚实盘比因子}
+\end{figure}
+
+\subsection{5分钟偏度因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: NI2606.SHF
+\item 收盘价: 142120.00
+\item 偏度因子: -0.2658
+\item 上行偏度: +1.7722
+\item 下行偏度: -1.5789
+\item 交易信号: neutral
+\item 信号解读: 偏度处于中性区域，情绪不对称性不明显
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/intraday_skew/intraday_skew_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/intraday_skew/intraday_skew_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/intraday_skew/intraday_skew_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/intraday_skew/intraday_skew_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - 5分钟偏度因子}
+\end{figure}
+
+\subsection{展期+虚实盘组合因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: NI2606.SHF
+\item 收盘价: 142120.00
+\item 展期收益率: +3.11\%
+\item 虚实盘比: 1.923
+\item 组合得分: -0.64
+\item 交易信号: neutral
+\item 信号解读: 展期与虚实盘信号未形成共振，维持中性判断
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_virtual_combo/roll_virtual_combo_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_virtual_combo/roll_virtual_combo_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_virtual_combo/roll_virtual_combo_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/roll_virtual_combo/roll_virtual_combo_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - 展期+虚实盘组合因子}
+\end{figure}
+
+\subsection{持仓-价格联动因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: NI2606.SHF
+\item 收盘价: 142120.00
+\item 当日涨跌: +0.08\%
+\item 持仓变化: +9756
+\item 持仓变化率: +6.80\%
+\item 联动结构: 震荡观望
+\item 交易信号: neutral
+\item 信号解读: 价格与持仓变化均不显著，资金方向暂不明确
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/position_flow/position_price_flow_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/position_flow/position_price_flow_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/position_flow/position_price_flow_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni/position_flow/position_price_flow_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪镍 - 持仓-价格联动因子}
+\end{figure}
+
+\section{不锈钢 专题}
+
+\subsection{最新因子状态总览}
+\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.46\linewidth}}
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endfirsthead
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endhead
+展期收益率 & -- & -- \\
+价格动量 & +1 & -- \\
+MACD & +0 & uptrend \\
+虚实盘比 & neutral & 虚实盘比平稳，短线与持仓结构均衡 \\
+5分钟偏度 & neutral & 偏度处于中性区域，情绪不对称性不明显 \\
+展期+虚实盘组合 & neutral & 展期与虚实盘信号未形成共振，维持中性判断 \\
+持仓-价格联动 & neutral & 价格与持仓变化均不显著，资金方向暂不明确 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{不锈钢 历史分位数}
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+样本数 & 均值 & 5\% & 10\% & 25\% & 50\% & 75\% & 90\% \\
+\midrule
+1566 & -4.64\% & -27.39\% & -19.79\% & -9.56\% & -2.05\% & 2.62\% & 6.27\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{展期收益率因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 最新展期收益率: +1.12\%
+\item 样本数量: 1592
+\item 历史均值: -4.64\%
+\item 历史标准差: 10.78\%
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_yield_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_yield_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_yield_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_yield_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - 展期收益率因子}
+\end{figure}
+
+\subsection{价格动量因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 最新收盘价: 14905.00
+\item 20日动量: +2.86\%
+\item 趋势强度: +3.45\%
+\item 趋势标签: uptrend
+\item 交易信号: +1
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/momentum/momentum_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/momentum/momentum_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/momentum/momentum_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/momentum/momentum_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - 价格动量因子}
+\end{figure}
+
+\subsection{MACD 因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 当前趋势: uptrend
+\item DIF / DEA: 198.90 / 158.72
+\item MACD柱: 80.38
+\item 当前信号: +0
+\item 当前持仓: +1
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/macd/macd_chart.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/macd/macd_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - MACD 因子}
+\end{figure}
+
+\subsection{虚实盘比因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14905.00
+\item 虚实盘比: 1.380
+\item 持仓变化: -5415
+\item 成交变化: +49585
+\item 交易信号: neutral
+\item 信号解读: 虚实盘比平稳，短线与持仓结构均衡
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/virtual_ratio/virtual_real_ratio_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/virtual_ratio/virtual_real_ratio_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/virtual_ratio/virtual_real_ratio_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/virtual_ratio/virtual_real_ratio_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - 虚实盘比因子}
+\end{figure}
+
+\subsection{5分钟偏度因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14905.00
+\item 偏度因子: -0.0057
+\item 上行偏度: +3.3231
+\item 下行偏度: -1.8618
+\item 交易信号: neutral
+\item 信号解读: 偏度处于中性区域，情绪不对称性不明显
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/intraday_skew/intraday_skew_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/intraday_skew/intraday_skew_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/intraday_skew/intraday_skew_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/intraday_skew/intraday_skew_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - 5分钟偏度因子}
+\end{figure}
+
+\subsection{展期+虚实盘组合因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14905.00
+\item 展期收益率: +1.12\%
+\item 虚实盘比: 1.380
+\item 组合得分: +0.27
+\item 交易信号: neutral
+\item 信号解读: 展期与虚实盘信号未形成共振，维持中性判断
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/roll_virtual_combo/roll_virtual_combo_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - 展期+虚实盘组合因子}
+\end{figure}
+
+\subsection{持仓-价格联动因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: SS2606.SHF
+\item 收盘价: 14905.00
+\item 当日涨跌: +0.30\%
+\item 持仓变化: -5415
+\item 持仓变化率: -3.16\%
+\item 联动结构: 震荡观望
+\item 交易信号: neutral
+\item 信号解读: 价格与持仓变化均不显著，资金方向暂不明确
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/position_flow/position_price_flow_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/position_flow/position_price_flow_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/position_flow/position_price_flow_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ss/position_flow/position_price_flow_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{不锈钢 - 持仓-价格联动因子}
+\end{figure}
+
+\section{沪铜 专题}
+
+\subsection{最新因子状态总览}
+\begin{longtable}{p{0.24\linewidth}p{0.18\linewidth}p{0.46\linewidth}}
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endfirsthead
+\toprule
+因子 & 当前信号 & 解释 \\
+\midrule
+\endhead
+展期收益率 & -- & -- \\
+价格动量 & +1 & -- \\
+MACD & +0 & uptrend \\
+虚实盘比 & neutral & 虚实盘比平稳，短线与持仓结构均衡 \\
+5分钟偏度 & neutral & 偏度处于中性区域，情绪不对称性不明显 \\
+展期+虚实盘组合 & neutral & 展期与虚实盘信号未形成共振，维持中性判断 \\
+持仓-价格联动 & neutral & 价格与持仓变化均不显著，资金方向暂不明确 \\
+\bottomrule
+\end{longtable}
+
+\subsubsection{沪铜 历史分位数}
+\begin{center}
+\begin{tabular}{lrrrrrrr}
+\toprule
+样本数 & 均值 & 5\% & 10\% & 25\% & 50\% & 75\% & 90\% \\
+\midrule
+1527 & -0.74\% & -4.85\% & -3.65\% & -2.05\% & -0.20\% & 1.04\% & 2.14\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{展期收益率因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 最新展期收益率: +0.19\%
+\item 样本数量: 1527
+\item 历史均值: -0.74\%
+\item 历史标准差: 2.85\%
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_yield_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_yield_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_yield_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_yield_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - 展期收益率因子}
+\end{figure}
+
+\subsection{价格动量因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 最新收盘价: 102780.00
+\item 20日动量: +7.52\%
+\item 趋势强度: +1.38\%
+\item 趋势标签: uptrend
+\item 交易信号: +1
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/momentum/momentum_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/momentum/momentum_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/momentum/momentum_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/momentum/momentum_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - 价格动量因子}
+\end{figure}
+
+\subsection{MACD 因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 当前趋势: uptrend
+\item DIF / DEA: 1206.06 / 609.57
+\item MACD柱: 1192.98
+\item 当前信号: +0
+\item 当前持仓: +1
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/macd/macd_chart.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/macd/macd_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - MACD 因子}
+\end{figure}
+
+\subsection{虚实盘比因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102780.00
+\item 虚实盘比: 0.771
+\item 持仓变化: +12981
+\item 成交变化: +84241
+\item 交易信号: neutral
+\item 信号解读: 虚实盘比平稳，短线与持仓结构均衡
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/virtual_ratio/virtual_real_ratio_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/virtual_ratio/virtual_real_ratio_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/virtual_ratio/virtual_real_ratio_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/virtual_ratio/virtual_real_ratio_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - 虚实盘比因子}
+\end{figure}
+
+\subsection{5分钟偏度因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102780.00
+\item 偏度因子: -0.8064
+\item 上行偏度: +1.0170
+\item 下行偏度: -2.0042
+\item 交易信号: neutral
+\item 信号解读: 偏度处于中性区域，情绪不对称性不明显
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/intraday_skew/intraday_skew_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/intraday_skew/intraday_skew_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/intraday_skew/intraday_skew_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/intraday_skew/intraday_skew_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - 5分钟偏度因子}
+\end{figure}
+
+\subsection{展期+虚实盘组合因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102780.00
+\item 展期收益率: +0.19\%
+\item 虚实盘比: 0.771
+\item 组合得分: +0.42
+\item 交易信号: neutral
+\item 信号解读: 展期与虚实盘信号未形成共振，维持中性判断
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/roll_virtual_combo/roll_virtual_combo_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - 展期+虚实盘组合因子}
+\end{figure}
+
+\subsection{持仓-价格联动因子}
+\begin{itemize}
+\item 日期: 2026-04-23
+\item 主力合约: CU2606.SHF
+\item 收盘价: 102780.00
+\item 当日涨跌: +0.14\%
+\item 持仓变化: +12981
+\item 持仓变化率: +6.36\%
+\item 联动结构: 震荡观望
+\item 交易信号: neutral
+\item 信号解读: 价格与持仓变化均不显著，资金方向暂不明确
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/position_flow/position_price_flow_seasonal.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/position_flow/position_price_flow_rolling_ic.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/position_flow/position_price_flow_group_returns.png}
+    \vspace{0.2cm}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/cu/position_flow/position_price_flow_backtest_nav.png}
+    \vspace{0.2cm}
+\end{minipage}
+\\[0.3cm]
+\caption{沪铜 - 持仓-价格联动因子}
+\end{figure}
+        \section{策略扩展研究}
+
+\subsection{VIX + 标普500 恐慌反转策略}
+\begin{itemize}
+\item 日期: 2026-03-31
+\item 标的（标普500指数）收盘价: 6528.52
+\item VIX: 25.25
+\item RSI: 42.63
+\item VIX Z分数: -0.26
+\item 当前策略仓位（标普500指数）: +1
+\item 当前仓位说明: 做多标普500指数
+\item 本次持仓天数: 0
+\item 策略累计收益: +17.08\%
+\item 买入持有收益: +216.11\%
+\item 夏普比率: 0.22
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/vix_panic_reversion/backtest_chart.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{VIX + 标普500 恐慌反转策略}
+\end{figure}
+
+\subsection{VIX + 沪镍 恐慌反转策略}
+\begin{itemize}
+\item 日期: 2026-03-31
+\item 标的（沪镍主力连续）收盘价: 134780.00
+\item VIX: 25.25
+\item RSI: 46.61
+\item VIX Z分数: -0.26
+\item 当前策略仓位（沪镍主力连续）: +0
+\item 当前仓位说明: 空仓，未持有沪镍主力连续
+\item 本次持仓天数: 0
+\item 策略累计收益: +6.81\%
+\item 买入持有收益: +27.14\%
+\item 夏普比率: 0.15
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/ni_vix_panic_reversion/backtest_chart.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{VIX + 沪镍 恐慌反转策略}
+\end{figure}
+        \section{对比研究与附加实验}
+
+\subsection{品种影响对比}
+
+\begin{itemize}
+\item 品种影响对比回测
+\item 生成时间: 2026-04-15 15:47:17
+\item 结论摘要
+\item macd：沪镍 的 |5日IC| 更高，为 6.61\%，策略超额收益为 -136.20\%
+\item momentum：沪镍 的 |5日IC| 更高，为 3.90\%，策略超额收益为 -52.52\%
+\item position\_price\_flow：沪镍 的 |5日IC| 更高，为 4.68\%，策略超额收益为 -44.80\%
+\item roll\_virtual\_combo：沪铜 的 |5日IC| 更高，为 5.50\%，策略超额收益为 -88.00\%
+\item roll\_yield：沪铜 的 |5日IC| 更高，为 5.77\%，策略超额收益为 -71.19\%
+\item virtual\_real\_ratio：沪铜 的 |5日IC| 更高，为 3.23\%，策略超额收益为 -96.20\%
+\item 结果文件
+\item 汇总表: /Users/vv/Downloads/nickel\_research/data/processed/comparison/factor\_product\_comparison.csv
+\item 准确率图: /Users/vv/Downloads/nickel\_research/data/processed/comparison/factor\_abs\_ic5d\_comparison.png
+\item 超额收益图: /Users/vv/Downloads/nickel\_research/data/processed/comparison/factor\_excess\_return\_comparison.png
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/comparison/factor_abs_ic5d_comparison.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{不同品种下各因子准确率对比}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/comparison/factor_excess_return_comparison.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{不同品种下各因子超额收益对比}
+\end{figure}
+
+\subsection{MACD 降噪实验}
+
+\begin{itemize}
+\item 降噪前后对比报告
+\item 生成时间: 2026-04-10 16:46:42
+\item 研究品种: NI
+\item 平滑窗口: 3
+\item 核心结论
+\item |5日IC| 改善最多: 沪镍 / MACD / -2.69\%
+\item 超额收益改善最多: 沪镍 / MACD / +159.30\%
+\item 详细对比
+\item 沪镍
+\item MACD: |5日IC| 6.59\% -> 3.90\% (-2.69\%), 超额收益 -129.04\% -> +30.26\% (+159.30\%)
+\item 输出文件
+\item 原始汇总: /Users/vv/Downloads/nickel\_research/data/processed/comparison/denoise/denoise\_comparison\_raw.csv
+\item 差异汇总: /Users/vv/Downloads/nickel\_research/data/processed/comparison/denoise/denoise\_comparison\_delta.csv
+\item |5日IC| 对比图: /Users/vv/Downloads/nickel\_research/data/processed/comparison/denoise/denoise\_abs\_ic5d\_comparison.png
+\item 超额收益对比图: /Users/vv/Downloads/nickel\_research/data/processed/comparison/denoise/denoise\_excess\_return\_comparison.png
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/comparison/denoise/denoise_abs_ic5d_comparison.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{降噪前后准确率对比}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/comparison/denoise/denoise_excess_return_comparison.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{降噪前后超额收益对比}
+\end{figure}
+
+\subsection{VIX 策略跨标的对比}
+
+\begin{itemize}
+\item VIX + RSI 三品种对比回测
+\item 生成时间: 2026-04-13 11:26:54
+\item 核心结果
+\item 沪镍: 策略收益 +6.81\%，买入持有 +27.14\%，超额收益 -20.33\%，夏普 0.15
+\item 不锈钢: 策略收益 +0.24\%，买入持有 -5.76\%，超额收益 +6.00\%，夏普 0.03
+\item 沪铜: 策略收益 -10.49\%，买入持有 +108.67\%，超额收益 -119.16\%，夏普 -0.30
+\item 输出文件
+\item 汇总表: /Users/vv/Downloads/nickel\_research/data/processed/comparison/vix\_strategy\_product\_comparison.csv
+\item 图表: /Users/vv/Downloads/nickel\_research/data/processed/comparison/vix\_strategy\_product\_comparison.png
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/comparison/vix_strategy_product_comparison.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{VIX 策略跨标的对比}
+\end{figure}
+
+\subsection{VIX 反向策略对比}
+
+\begin{itemize}
+\item 反向 VIX + RSI 三品种对比回测
+\item 生成时间: 2026-04-13 11:30:14
+\item 核心结果
+\item 沪铜: 策略收益 +9.51\%，买入持有 +108.67\%，超额收益 -99.16\%，夏普 0.30
+\item 不锈钢: 策略收益 -0.73\%，买入持有 -5.76\%，超额收益 +5.03\%，夏普 -0.03
+\item 沪镍: 策略收益 -8.76\%，买入持有 +27.14\%，超额收益 -35.90\%，夏普 -0.15
+\item 输出文件
+\item 汇总表: /Users/vv/Downloads/nickel\_research/data/processed/comparison/vix\_strategy\_product\_comparison\_reverse.csv
+\item 图表: /Users/vv/Downloads/nickel\_research/data/processed/comparison/vix\_strategy\_product\_comparison\_reverse.png
+\end{itemize}
+
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[b]{0.48\linewidth}
+    \centering
+    \includegraphics[width=\linewidth]{/Users/biyunce/quant_research/data/processed/comparison/vix_strategy_product_comparison_reverse.png}
+    \vspace{0.2cm}
+\end{minipage}
+\caption{VIX 反向策略对比}
+\end{figure}
+        \end{document}
